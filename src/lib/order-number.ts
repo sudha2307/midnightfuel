@@ -1,24 +1,33 @@
 import prisma from "./prisma";
 
 export async function generateNextOrderNumber(): Promise<string> {
-  // Find highest existing order number
-  const latestOrder = await prisma.order.findFirst({
-    orderBy: { createdAt: "desc" },
-    select: { orderNumber: true },
-  });
+  try {
+    // Find all existing order numbers to determine the true maximum integer
+    const orders = await prisma.order.findMany({
+      select: { orderNumber: true },
+    });
 
-  if (!latestOrder || !latestOrder.orderNumber.startsWith("MF")) {
-    return "MF10001";
+    if (!orders || orders.length === 0) {
+      return "MF10001";
+    }
+
+    let maxNum = 10000;
+    for (const ord of orders) {
+      if (ord.orderNumber && ord.orderNumber.startsWith("MF")) {
+        const num = parseInt(ord.orderNumber.replace("MF", ""), 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    }
+
+    const nextNum = maxNum + 1;
+    return `MF${nextNum}`;
+  } catch (error) {
+    // Unique fallback using timestamp suffix
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    return `MF${Date.now().toString().slice(-4)}${randomSuffix}`;
   }
-
-  const numPart = latestOrder.orderNumber.replace("MF", "");
-  const nextNum = parseInt(numPart, 10) + 1;
-
-  if (isNaN(nextNum)) {
-    return `MF${Date.now().toString().slice(-5)}`;
-  }
-
-  return `MF${nextNum}`;
 }
 
 export function generateInvoiceNumber(orderNumber: string): string {

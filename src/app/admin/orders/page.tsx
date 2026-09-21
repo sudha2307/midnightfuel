@@ -40,39 +40,57 @@ export default function AdminLiveOrdersPage() {
   const knownOrderIdsRef = useRef<Set<string>>(new Set());
   const isInitialLoadRef = useRef(true);
 
-  // Web Audio Synth Chime for New Order Notification
+  // Audio Player for New Order Notification (Swiggy / Zomato style loud alarm tone)
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    // Preload the alarm audio
+    if (typeof window !== "undefined") {
+      const audio = new Audio("/mixkit-alarm-tone-996.wav");
+      audio.preload = "auto";
+      audioRef.current = audio;
+    }
+  }, []);
+
   const playNewOrderChime = () => {
     if (!soundEnabled) return;
+    try {
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((err) => {
+            console.warn("Audio autoplay policy blocked audio. User interaction required:", err);
+            // Fallback to Web Audio synth chime if file playback is restricted
+            playSynthChimeFallback();
+          });
+        }
+      } else {
+        const audio = new Audio("/mixkit-alarm-tone-996.wav");
+        audio.play().catch(playSynthChimeFallback);
+      }
+    } catch (e) {
+      playSynthChimeFallback();
+    }
+  };
+
+  const playSynthChimeFallback = () => {
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
-
-      const osc1 = ctx.createOscillator();
-      const osc2 = ctx.createOscillator();
+      const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-
-      osc1.type = "sine";
-      osc1.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-      osc1.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3); // A5
-
-      osc2.type = "triangle";
-      osc2.frequency.setValueAtTime(880, ctx.currentTime);
-      osc2.frequency.exponentialRampToValueAtTime(1174.66, ctx.currentTime + 0.3); // D6
-
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      gain.gain.setValueAtTime(0.4, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
-
-      osc1.connect(gain);
-      osc2.connect(gain);
+      osc.connect(gain);
       gain.connect(ctx.destination);
-
-      osc1.start();
-      osc2.start();
-      osc1.stop(ctx.currentTime + 0.8);
-      osc2.stop(ctx.currentTime + 0.8);
-    } catch (e) {
-      console.warn("Audio notification blocked or unavailable", e);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.8);
+    } catch (err) {
+      console.warn("Synth fallback unavailable", err);
     }
   };
 

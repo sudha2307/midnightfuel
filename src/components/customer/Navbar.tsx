@@ -79,15 +79,16 @@ export default function Navbar() {
       </div>
 
       {/* Main Navbar */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto pl-1 pr-3 sm:px-6 lg:px-8 h-20 sm:h-24 flex items-center justify-between">
         {/* logo */}
-        <Link href="/" className="flex items-center group flex-shrink-0" aria-label={businessName}>
-          <div className="relative h-34 w-86 sm:h-24 sm:w-64 group-hover:scale-105 transition-transform flex-shrink-0">
+        <Link href="/" className="flex items-center group flex-shrink-0 -ml-1 sm:ml-0" aria-label={businessName}>
+          <div className="flex items-center justify-start">
             <Image
               src="/images/logo2.png"
               alt={businessName}
-              fill
-              className="object-contain object-left"
+              width={260}
+              height={80}
+              className="h-14 w-auto xs:h-16 sm:h-20 lg:h-22 object-contain object-left group-hover:scale-105 transition-transform"
               priority
             />
           </div>

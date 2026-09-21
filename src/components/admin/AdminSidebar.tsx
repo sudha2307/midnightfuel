@@ -60,9 +60,9 @@ export default function AdminSidebar() {
       <div>
         <div className="p-4 sm:p-5 border-b border-border/70 flex items-center justify-between">
           <Link href="/admin" onClick={closeMobileNav} className="flex items-center" aria-label="Admin Control Hub">
-            <div className="relative h-11 w-40 sm:h-12 sm:w-44 flex-shrink-0">
+            <div className="relative h-36 w-44 sm:h-24 sm:w-44 flex-shrink-0">
               <Image
-                src="/images/logo.png"
+                src="/images/logo2.png"
                 alt="Midnight Fuel Admin"
                 fill
                 className="object-contain object-left"

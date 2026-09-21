@@ -514,42 +514,39 @@ export default function CheckoutPage() {
               </p>
             </div>
 
-            {/* Step 4: Payment Method — Large Touch Cards */}
+            {/* Step 4: Payment Method — Cash on Delivery (COD) */}
             <div className="p-4 sm:p-6 rounded-2xl bg-surface border border-border space-y-4 shadow-card">
               <h2 className="text-sm sm:text-base font-bold text-white uppercase tracking-wider flex items-center gap-2 font-heading">
                 <Banknote className="w-4 h-4 text-primary" /> 4. Payment Method
               </h2>
 
               {/* Touch-Friendly Payment Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:gap-4">
                 {/* Cash on Delivery Card */}
                 <div
                   onClick={() => setPaymentMethod("COD")}
-                  className={`p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between min-h-[90px] ${
-                    paymentMethod === "COD"
-                      ? "bg-primary/10 border-primary shadow-glow text-white ring-1 ring-primary/40"
-                      : "bg-surface-raised border-border text-zinc-400 hover:text-white"
-                  }`}
+                  className="p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between min-h-[90px] bg-primary/10 border-primary shadow-glow text-white ring-1 ring-primary/40"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <Banknote className="w-6 h-6 text-primary" />
                     <input
                       type="radio"
                       name="payment"
-                      checked={paymentMethod === "COD"}
-                      onChange={() => setPaymentMethod("COD")}
+                      checked={true}
+                      readOnly
                       className="text-primary w-4 h-4"
                     />
                   </div>
                   <div>
-                    <span className="text-sm font-black block text-white">💵 CASH</span>
+                    <span className="text-sm font-black block text-white">💵 CASH ON DELIVERY (COD)</span>
                     <span className="text-xs text-zinc-400 mt-0.5 block">
-                      Pay when order arrives
+                      Pay cash when your hot food arrives at your doorstep or pickup
                     </span>
                   </div>
                 </div>
 
-                {/* UPI Payment Card */}
+                {/* 
+                // UPI / Online payment option commented out for now — will be re-enabled in future updates
                 <div
                   onClick={() => setPaymentMethod("UPI")}
                   className={`p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between min-h-[90px] ${
@@ -575,9 +572,11 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                 </div>
+                */}
               </div>
 
-              {/* Dedicated UPI Box */}
+              {/* 
+              // Dedicated UPI Box (Commented out)
               {paymentMethod === "UPI" && (
                 <div className="p-4 sm:p-5 rounded-2xl bg-[#0e0e0e] border border-emerald-500/40 space-y-4 animate-in fade-in duration-300">
                   <div className="flex flex-col xs:flex-row xs:items-center justify-between border-b border-border/60 pb-3 gap-2">
@@ -649,6 +648,7 @@ export default function CheckoutPage() {
                   </div>
                 </div>
               )}
+              */}
             </div>
           </div>
 

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import { AdminNavProvider } from "@/context/AdminNavContext";
+import { AdminNotificationProvider } from "@/context/AdminNotificationContext";
 import { Flame, Lock, User, AlertCircle, ArrowRight, ShieldCheck, Loader2 } from "lucide-react";
 
 export default function AdminLayout({
@@ -88,8 +89,9 @@ export default function AdminLayout({
   }
 
   return (
-    <AdminNavProvider>
-      <div className="min-h-screen bg-[#090909] flex text-foreground relative">
+    <AdminNotificationProvider isAuthenticated={isAuthenticated}>
+      <AdminNavProvider>
+        <div className="min-h-screen bg-[#090909] flex text-foreground relative">
         {/* Only render sidebar and allow interaction when authenticated */}
         {isAuthenticated && <AdminSidebar />}
 
@@ -210,5 +212,6 @@ export default function AdminLayout({
         </div>
       </div>
     </AdminNavProvider>
+  </AdminNotificationProvider>
   );
 }

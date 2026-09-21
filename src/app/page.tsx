@@ -20,6 +20,8 @@ import { ComboType } from "@/types";
 
 import { formatTime12Hour } from "@/lib/business-hours";
 
+export const dynamic = "force-dynamic";
+
 // Fetch popular products, categories, daily combos & live settings on server
 async function getHomePageData() {
   try {
