@@ -131,7 +131,7 @@ export default function ContactPage() {
           </div>
 
           {/* Right: Message Form */}
-          <div className="lg:col-span-6 p-6 sm:p-8 rounded-3xl bg-surface border border-border shadow-card space-y-6">
+          {/* <div className="lg:col-span-6 p-6 sm:p-8 rounded-3xl bg-surface border border-border shadow-card space-y-6">
             <div>
               <h3 className="text-xl font-bold text-white font-heading">
                 Send a Direct Message
@@ -195,7 +195,7 @@ export default function ContactPage() {
                 </button>
               </form>
             )}
-          </div>
+          </div> */}
         </div>
       </main>
 

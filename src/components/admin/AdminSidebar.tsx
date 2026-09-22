@@ -21,6 +21,7 @@ import {
   ExternalLink,
   X,
   Truck,
+  History,
 } from "lucide-react";
 import { useAdminNav } from "@/context/AdminNavContext";
 
@@ -43,6 +44,7 @@ export default function AdminSidebar() {
   const menuItems = [
     { name: "Overview", href: "/admin", icon: LayoutDashboard },
     { name: "Live Orders", href: "/admin/orders", icon: ShoppingBag, highlight: true },
+    { name: "Order History", href: "/admin/orders/history", icon: History },
     { name: "Daily Combos", href: "/admin/combos", icon: Sparkles },
     { name: "Menu Management", href: "/admin/menu", icon: UtensilsCrossed },
     { name: "Price Management", href: "/admin/prices", icon: Tag },
@@ -60,12 +62,12 @@ export default function AdminSidebar() {
       <div>
         <div className="p-4 sm:p-5 border-b border-border/70 flex items-center justify-between">
           <Link href="/admin" onClick={closeMobileNav} className="flex items-center" aria-label="Admin Control Hub">
-            <div className="relative h-36 w-44 sm:h-24 sm:w-44 flex-shrink-0">
+            <div className="relative h-16 w-24 sm:h-14 sm:w-24 flex-shrink-0">
               <Image
                 src="/images/logo2.png"
                 alt="Midnight Fuel Admin"
                 fill
-                className="object-contain object-left"
+                className="object-cover object-left"
               />
             </div>
           </Link>
@@ -86,6 +88,8 @@ export default function AdminSidebar() {
             const isActive =
               item.href === "/admin"
                 ? pathname === "/admin"
+                : item.href === "/admin/orders"
+                ? pathname === "/admin/orders"
                 : pathname.startsWith(item.href);
 
             const Icon = item.icon;

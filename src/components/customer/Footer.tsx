@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -17,6 +17,25 @@ import { formatTime12Hour } from "@/lib/business-hours";
 
 export default function Footer() {
   const { settings, status } = useStore();
+  const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([]);
+
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch("/api/categories");
+        if (res.ok) {
+          const data = await res.json();
+          const activeCategories = (data.categories || [])
+            .filter((c: any) => c.isActive !== false)
+            .slice(0, 5);
+          setCategories(activeCategories);
+        }
+      } catch (e) {
+        console.error("Failed to load footer categories", e);
+      }
+    }
+    fetchCategories();
+  }, []);
 
   const businessName = settings?.businessName || "Midnight Fuel";
   const tagline = settings?.tagline || "EAT • ENJOY • RECHARGE";
@@ -118,42 +137,32 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Categories */}
+        {/* Dynamic Top 5 Categories */}
         <div>
           <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">
-            Menu Specialties
+            Menu Categories
           </h4>
           <ul className="space-y-2 text-sm">
-            <li>
-              <Link href="/menu?category=mandhi" className="hover:text-primary transition-colors">
-                Authentic Mandhi
-              </Link>
-            </li>
-            <li>
-              <Link href="/menu?category=chicken" className="hover:text-primary transition-colors">
-                Crispy Fried Chicken
-              </Link>
-            </li>
-            <li>
-              <Link href="/menu?category=burgers" className="hover:text-primary transition-colors">
-                Midnight Burgers
-              </Link>
-            </li>
-            <li>
-              <Link href="/menu?category=chicken-gravy" className="hover:text-primary transition-colors">
-                Butter Chicken & Curries
-              </Link>
-            </li>
-            <li>
-              <Link href="/menu?category=naan-and-parotta" className="hover:text-primary transition-colors">
-                Kerala Parotta & Naans
-              </Link>
-            </li>
-            <li>
-              <Link href="/menu?category=drinks" className="hover:text-primary transition-colors">
-                Mojitos & Thick Shakes
-              </Link>
-            </li>
+            {categories.length > 0 ? (
+              categories.map((cat) => (
+                <li key={cat.id}>
+                  <Link
+                    href={`/menu?category=${cat.slug || cat.id}`}
+                    className="hover:text-primary transition-colors block"
+                  >
+                    {cat.name}
+                  </Link>
+                </li>
+              ))
+            ) : (
+              <>
+                <li>
+                  <Link href="/menu" className="hover:text-primary transition-colors">
+                    View Full Menu →
+                  </Link>
+                </li>
+              </>
+            )}
           </ul>
         </div>
 
@@ -165,7 +174,7 @@ export default function Footer() {
           <ul className="space-y-2 text-sm">
             <li>
               <Link href="/#daily-combos" className="hover:text-primary transition-colors">
-                🔥 Daily Midnight Combos
+                Daily Midnight Combos
               </Link>
             </li>
             <li>
@@ -232,20 +241,30 @@ export default function Footer() {
 
       {/* Bottom Copyright Bar */}
       <div className="border-t border-border/60 py-6 text-xs text-zinc-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
             <p>© {new Date().getFullYear()} {businessName}. All rights reserved.</p>
             <span className="hidden sm:inline text-zinc-700">•</span>
             <p className="text-zinc-400 font-medium">
-              Designed & Developed by <span className="text-primary font-bold hover:text-white transition-colors cursor-default">Aurix360</span>
+              Designed & Developed by{" "}
+              <a
+                href="https://www.aurix360.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary font-bold hover:underline hover:text-white transition-colors cursor-pointer"
+              >
+                Aurix360
+              </a>
             </p>
           </div>
-          <div className="flex items-center gap-6">
-            <span className="text-primary font-medium">⚡ FSSAI Certified: 12423019000123</span>
-            <span>Made with 🔥 for Midnight Cravers</span>
+          <div className="flex items-center justify-center sm:justify-end">
+            <span className="text-primary font-semibold tracking-wide bg-primary/10 border border-primary/20 px-3 py-1 rounded-full text-[11px]">
+              ⚡ FSSAI Certified: 12423019000123
+            </span>
           </div>
         </div>
       </div>
     </footer>
   );
 }
+

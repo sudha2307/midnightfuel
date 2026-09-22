@@ -22,6 +22,8 @@ import {
   Flame,
   Sparkles,
   MessageSquare,
+  Loader2,
+  History,
 } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import { OrderType } from "@/types";
@@ -30,11 +32,12 @@ import { getWhatsAppDirectLink, generateWhatsAppMessageText } from "@/services/w
 
 export default function AdminLiveOrdersPage() {
   const [orders, setOrders] = useState<OrderType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>("ACTIVE");
   const [searchQuery, setSearchQuery] = useState("");
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [updatingInfo, setUpdatingInfo] = useState<{ id: string; status: string } | null>(null);
 
   // Store known order IDs to detect new incoming orders
   const knownOrderIdsRef = useRef<Set<string>>(new Set());
@@ -121,6 +124,7 @@ export default function AdminLiveOrdersPage() {
       console.error("Failed to fetch orders", e);
     } finally {
       if (isManual) setIsRefreshing(false);
+      setIsLoading(false);
     }
   };
 
@@ -131,7 +135,7 @@ export default function AdminLiveOrdersPage() {
   }, []);
 
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
-    setUpdatingId(orderId);
+    setUpdatingInfo({ id: orderId, status: newStatus });
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: "PATCH",
@@ -148,7 +152,7 @@ export default function AdminLiveOrdersPage() {
     } catch (e) {
       console.error("Failed to update status", e);
     } finally {
-      setUpdatingId(null);
+      setUpdatingInfo(null);
     }
   };
 
@@ -191,6 +195,14 @@ export default function AdminLiveOrdersPage() {
         subtitle="Kitchen dispatch board with instant audio alerts and status transitions."
         actionButton={
           <div className="flex items-center gap-2">
+            <Link
+              href="/admin/orders/history"
+              className="p-2 px-3 rounded-xl bg-surface border border-border hover:border-primary text-zinc-300 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
+            >
+              <History className="w-3.5 h-3.5 text-primary" />
+              <span className="hidden sm:inline">Order History</span>
+            </Link>
+
             <button
               onClick={() => setSoundEnabled(!soundEnabled)}
               className={`p-2 px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-colors ${
@@ -309,7 +321,36 @@ export default function AdminLiveOrdersPage() {
         </div>
 
         {/* Live Orders Grid */}
-        {filteredOrders.length === 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div
+                key={i}
+                className="rounded-3xl bg-surface border border-border flex flex-col justify-between overflow-hidden shadow-card p-5 space-y-4"
+              >
+                <div className="flex items-center justify-between pb-3 border-b border-border/60">
+                  <div className="space-y-2">
+                    <div className="w-24 h-5 rounded-lg bg-zinc-800" />
+                    <div className="w-16 h-3 rounded bg-zinc-800/60" />
+                  </div>
+                  <div className="w-20 h-6 rounded-full bg-zinc-800" />
+                </div>
+                <div className="space-y-2">
+                  <div className="w-32 h-4 rounded bg-zinc-800" />
+                  <div className="w-44 h-3 rounded bg-zinc-800/60" />
+                </div>
+                <div className="space-y-2 pt-2">
+                  <div className="w-full h-8 rounded-xl bg-zinc-800/40" />
+                  <div className="w-full h-8 rounded-xl bg-zinc-800/40" />
+                </div>
+                <div className="pt-4 border-t border-border/60 flex items-center justify-between">
+                  <div className="w-20 h-6 rounded bg-zinc-800" />
+                  <div className="w-28 h-9 rounded-xl bg-zinc-800" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredOrders.length === 0 ? (
           <div className="text-center py-20 bg-surface border border-border rounded-3xl p-8 max-w-md mx-auto space-y-3">
             <Package className="w-12 h-12 text-zinc-600 mx-auto" />
             <h3 className="text-lg font-bold text-white">No Orders in this View</h3>
@@ -321,7 +362,8 @@ export default function AdminLiveOrdersPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredOrders.map((order) => {
               const statusInfo = getStatusInfo(order.orderStatus);
-              const isUpdating = updatingId === order.id;
+              const isUpdating = updatingInfo?.id === order.id;
+              const updatingStatus = isUpdating ? updatingInfo?.status : null;
 
               const itemsSummary = [
                 ...order.items.map((i) => `${i.quantity}× ${i.productName}`),
@@ -346,12 +388,19 @@ export default function AdminLiveOrdersPage() {
               return (
                 <div
                   key={order.id}
-                  className={`rounded-3xl bg-surface border flex flex-col justify-between overflow-hidden shadow-card transition-all ${
-                    order.orderStatus === "NEW"
+                  className={`relative rounded-3xl bg-surface border flex flex-col justify-between overflow-hidden shadow-card transition-all ${
+                    isUpdating
+                      ? "border-primary/80 ring-2 ring-primary/40 shadow-glow"
+                      : order.orderStatus === "NEW"
                       ? "border-amber-500/80 shadow-glow ring-2 ring-amber-500/20"
                       : "border-border hover:border-primary/40"
                   }`}
                 >
+                  {/* Subtle Top Loading Line when updating */}
+                  {isUpdating && (
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-orange-400 to-amber-300 animate-pulse z-30" />
+                  )}
+
                   {/* Card Header */}
                   <div className="p-5 border-b border-border/70 bg-surface-raised/40 space-y-2">
                     <div className="flex items-center justify-between">
@@ -494,16 +543,36 @@ export default function AdminLiveOrdersPage() {
                           <button
                             onClick={() => handleUpdateStatus(order.id, "CONFIRMED")}
                             disabled={isUpdating}
-                            className="py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-1 shadow-glow transition-all"
+                            className="py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed text-black font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-glow transition-all active:scale-95"
                           >
-                            <CheckCircle2 className="w-4 h-4" /> ACCEPT
+                            {updatingStatus === "CONFIRMED" ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>ACCEPTING...</span>
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="w-4 h-4" />
+                                <span>ACCEPT</span>
+                              </>
+                            )}
                           </button>
                           <button
                             onClick={() => handleUpdateStatus(order.id, "CANCELLED")}
                             disabled={isUpdating}
-                            className="py-2.5 px-3 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-800 text-rose-300 font-bold text-xs uppercase tracking-wider transition-all"
+                            className="py-2.5 px-3 rounded-xl bg-rose-950/80 hover:bg-rose-900 disabled:opacity-60 disabled:cursor-not-allowed border border-rose-800 text-rose-300 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95"
                           >
-                            <XCircle className="w-4 h-4" /> REJECT
+                            {updatingStatus === "CANCELLED" ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>REJECTING...</span>
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="w-4 h-4" />
+                                <span>REJECT</span>
+                              </>
+                            )}
                           </button>
                         </div>
                       )}
@@ -512,9 +581,19 @@ export default function AdminLiveOrdersPage() {
                         <button
                           onClick={() => handleUpdateStatus(order.id, "PREPARING")}
                           disabled={isUpdating}
-                          className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-primary to-orange-600 hover:from-primary-hover hover:to-orange-500 text-black font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-glow transition-all"
+                          className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-primary to-orange-600 hover:from-primary-hover hover:to-orange-500 disabled:opacity-60 disabled:cursor-not-allowed text-black font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-glow transition-all active:scale-95"
                         >
-                          <ChefHat className="w-4 h-4 stroke-[2.5]" /> START PREPARING
+                          {updatingStatus === "PREPARING" ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>STARTING KITCHEN...</span>
+                            </>
+                          ) : (
+                            <>
+                              <ChefHat className="w-4 h-4 stroke-[2.5]" />
+                              <span>START PREPARING</span>
+                            </>
+                          )}
                         </button>
                       )}
 
@@ -522,10 +601,19 @@ export default function AdminLiveOrdersPage() {
                         <button
                           onClick={() => handleUpdateStatus(order.id, "READY")}
                           disabled={isUpdating}
-                          className="w-full py-2.5 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-glow transition-all"
+                          className="w-full py-2.5 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-glow transition-all active:scale-95"
                         >
-                          <Package className="w-4 h-4 stroke-[2.5]" />
-                          {order.orderType === "PICKUP" ? "READY FOR PICKUP (NOTIFY)" : "FOOD READY & PACKED"}
+                          {updatingStatus === "READY" ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>MARKING FOOD READY...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Package className="w-4 h-4 stroke-[2.5]" />
+                              <span>{order.orderType === "PICKUP" ? "READY FOR PICKUP (NOTIFY)" : "FOOD READY & PACKED"}</span>
+                            </>
+                          )}
                         </button>
                       )}
 
@@ -534,17 +622,37 @@ export default function AdminLiveOrdersPage() {
                           <button
                             onClick={() => handleUpdateStatus(order.id, "DELIVERED")}
                             disabled={isUpdating}
-                            className="w-full py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-glow transition-all"
+                            className="w-full py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed text-black font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-glow transition-all active:scale-95"
                           >
-                            <CheckCircle2 className="w-4 h-4 stroke-[2.5]" /> MARK AS COLLECTED / HANDED OVER
+                            {updatingStatus === "DELIVERED" ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>MARKING COLLECTED...</span>
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
+                                <span>MARK AS COLLECTED / HANDED OVER</span>
+                              </>
+                            )}
                           </button>
                         ) : (
                           <button
                             onClick={() => handleUpdateStatus(order.id, "OUT_FOR_DELIVERY")}
                             disabled={isUpdating}
-                            className="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-glow transition-all"
+                            className="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-glow transition-all active:scale-95"
                           >
-                            <Truck className="w-4 h-4 stroke-[2.5]" /> DISPATCH / OUT FOR DELIVERY
+                            {updatingStatus === "OUT_FOR_DELIVERY" ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>DISPATCHING ORDER...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Truck className="w-4 h-4 stroke-[2.5]" />
+                                <span>DISPATCH / OUT FOR DELIVERY</span>
+                              </>
+                            )}
                           </button>
                         )
                       )}
@@ -553,9 +661,19 @@ export default function AdminLiveOrdersPage() {
                         <button
                           onClick={() => handleUpdateStatus(order.id, "DELIVERED")}
                           disabled={isUpdating}
-                          className="w-full py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-glow transition-all"
+                          className="w-full py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed text-black font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-glow transition-all active:scale-95"
                         >
-                          <CheckCircle2 className="w-4 h-4 stroke-[2.5]" /> MARK AS DELIVERED
+                          {updatingStatus === "DELIVERED" ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>MARKING DELIVERED...</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
+                              <span>MARK AS DELIVERED</span>
+                            </>
+                          )}
                         </button>
                       )}
 

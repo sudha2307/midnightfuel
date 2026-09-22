@@ -64,11 +64,12 @@ function MenuContent() {
     return products
       .filter((product) => {
         // Category filter
-        if (
-          selectedCategory !== "all" &&
-          product.category?.slug !== selectedCategory
-        ) {
-          return false;
+        if (selectedCategory !== "all") {
+          const matchCat =
+            product.category?.slug === selectedCategory ||
+            product.category?.id === selectedCategory ||
+            product.categoryId === selectedCategory;
+          if (!matchCat) return false;
         }
 
         // Veg filter
@@ -201,7 +202,7 @@ function MenuContent() {
               key={cat.id}
               onClick={() => setSelectedCategory(cat.slug)}
               className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0 min-h-[40px] ${
-                selectedCategory === cat.slug
+                selectedCategory === cat.slug || selectedCategory === cat.id
                   ? "bg-primary text-black shadow-glow"
                   : "bg-surface-raised hover:bg-surface border border-border text-zinc-300 hover:text-white"
               }`}

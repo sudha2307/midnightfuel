@@ -20,6 +20,9 @@ import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
+  Eye,
+  X,
+  ExternalLink,
 } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import { formatINR, formatDate, formatTimeOnly } from "@/lib/utils";
@@ -31,6 +34,7 @@ export default function AdminInvoicesPage() {
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [previewOrder, setPreviewOrder] = useState<any | null>(null);
 
   // Filter Presets
   const [datePreset, setDatePreset] = useState<FilterPreset>("today");
@@ -478,14 +482,25 @@ export default function AdminInvoicesPage() {
                         </td>
 
                         <td className="py-4 px-6 text-right">
-                          <Link
-                            href={`/invoice/${ord.id}`}
-                            target="_blank"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-raised border border-border text-zinc-300 hover:text-white hover:border-primary text-xs font-bold transition-all min-h-[38px]"
-                          >
-                            <Printer className="w-3.5 h-3.5 text-primary" />
-                            <span>Invoice</span>
-                          </Link>
+                          <div className="inline-flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => setPreviewOrder(ord)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/40 text-primary text-xs font-bold transition-all min-h-[38px] shadow-sm"
+                              title="Preview Invoice in Popup"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Preview</span>
+                            </button>
+                            <Link
+                              href={`/invoice/${ord.id}`}
+                              target="_blank"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-raised border border-border text-zinc-300 hover:text-white hover:border-primary text-xs font-bold transition-all min-h-[38px]"
+                              title="Open Full Page Invoice"
+                            >
+                              <Printer className="w-3.5 h-3.5 text-primary" />
+                              <span>Print</span>
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -532,7 +547,7 @@ export default function AdminInvoicesPage() {
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-border/60 flex items-center justify-between">
+                <div className="pt-2 border-t border-border/60 flex items-center justify-between gap-2">
                   <div>
                     <span className="text-[11px] text-zinc-400 block font-medium">
                       {formatDate(ord.createdAt)}
@@ -548,14 +563,23 @@ export default function AdminInvoicesPage() {
                     </span>
                   </div>
 
-                  <Link
-                    href={`/invoice/${ord.id}`}
-                    target="_blank"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-surface-raised border border-border text-white text-xs font-bold hover:border-primary min-h-[40px]"
-                  >
-                    <Printer className="w-3.5 h-3.5 text-primary" />
-                    <span>View / Print</span>
-                  </Link>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setPreviewOrder(ord)}
+                      className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-primary/10 border border-primary/40 text-primary text-xs font-bold hover:bg-primary/20 min-h-[38px]"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Preview</span>
+                    </button>
+                    <Link
+                      href={`/invoice/${ord.id}`}
+                      target="_blank"
+                      className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-surface-raised border border-border text-white text-xs font-bold hover:border-primary min-h-[38px]"
+                    >
+                      <Printer className="w-3.5 h-3.5 text-primary" />
+                      <span>Print</span>
+                    </Link>
+                  </div>
                 </div>
               </div>
             );
@@ -623,6 +647,75 @@ export default function AdminInvoicesPage() {
           </div>
         )}
       </main>
+
+      {/* Invoice Quick Preview Modal Popup */}
+      {previewOrder && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
+          <div className="bg-[#121212] border border-border rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-surface-raised/60 gap-2">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary flex-shrink-0">
+                  <Receipt className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white font-heading">
+                    Invoice Preview: {previewOrder.invoice?.invoiceNumber || `INV-${previewOrder.orderNumber}`}
+                  </h3>
+                  <span className="text-xs text-zinc-400">
+                    Order #{previewOrder.orderNumber} • {previewOrder.customerName} ({previewOrder.customerPhone})
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={`/invoice/${previewOrder.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface border border-border hover:border-primary text-xs font-bold text-zinc-200 transition-colors"
+                  title="Open full page in new tab"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-primary" />
+                  <span>Full Page</span>
+                </a>
+                <button
+                  onClick={() => {
+                    const iframe = document.getElementById("invoice-preview-frame") as HTMLIFrameElement;
+                    if (iframe && iframe.contentWindow) {
+                      iframe.contentWindow.focus();
+                      iframe.contentWindow.print();
+                    } else {
+                      window.open(`/invoice/${previewOrder.id}`, "_blank");
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary-hover text-black text-xs font-extrabold shadow-glow uppercase tracking-wider transition-all"
+                >
+                  <Printer className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>Print</span>
+                </button>
+                <button
+                  onClick={() => setPreviewOrder(null)}
+                  className="p-2 rounded-xl bg-surface border border-border text-zinc-400 hover:text-white hover:border-rose-500 transition-colors"
+                  aria-label="Close Preview"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body / Iframe */}
+            <div className="flex-1 w-full bg-[#0d0d0d] overflow-hidden p-2 sm:p-4">
+              <iframe
+                id="invoice-preview-frame"
+                src={`/invoice/${previewOrder.id}`}
+                title="Invoice Preview"
+                className="w-full h-[65vh] rounded-2xl border border-border/50 bg-[#0d0d0d]"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

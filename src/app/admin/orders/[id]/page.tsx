@@ -14,6 +14,12 @@ import {
   MessageSquare,
   ClipboardList,
   Save,
+  Loader2,
+  Eye,
+  X,
+  ExternalLink,
+  Printer,
+  Receipt,
 } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import { OrderType, DeliveryDistanceSlabType } from "@/types";
@@ -29,7 +35,8 @@ export default function AdminOrderDetailPage({
   const [order, setOrder] = useState<OrderType | null>(null);
   const [slabs, setSlabs] = useState<DeliveryDistanceSlabType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [isPreviewInvoiceOpen, setIsPreviewInvoiceOpen] = useState(false);
 
   // Internal Kitchen Note State
   const [internalKitchenNote, setInternalKitchenNote] = useState("");
@@ -75,7 +82,7 @@ export default function AdminOrderDetailPage({
   }, [fetchOrderAndSlabs]);
 
   const handleStatusChange = async (newStatus: string) => {
-    setIsUpdating(true);
+    setUpdatingStatus(newStatus);
     try {
       const res = await fetch(`/api/orders/${id}`, {
         method: "PATCH",
@@ -91,7 +98,7 @@ export default function AdminOrderDetailPage({
       console.error(e);
       showToast("Failed to update status");
     } finally {
-      setIsUpdating(false);
+      setUpdatingStatus(null);
     }
   };
 
@@ -225,6 +232,13 @@ export default function AdminOrderDetailPage({
             >
               <Truck className="w-4 h-4 stroke-[2.5]" /> Edit Delivery Charge
             </button>
+            <button
+              onClick={() => setIsPreviewInvoiceOpen(true)}
+              className="px-3.5 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/40 text-primary text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+              title="Preview Invoice in Popup"
+            >
+              <Eye className="w-4 h-4" /> Preview Invoice
+            </button>
             <Link
               href={`/invoice/${order.id}`}
               target="_blank"
@@ -270,20 +284,27 @@ export default function AdminOrderDetailPage({
 
           <div className="flex items-center gap-2 flex-wrap">
             {["NEW", "CONFIRMED", "PREPARING", "READY", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"].map(
-              (st) => (
-                <button
-                  key={st}
-                  onClick={() => handleStatusChange(st)}
-                  disabled={isUpdating || order.orderStatus === st}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all ${
-                    order.orderStatus === st
-                      ? "bg-primary text-black font-black shadow-glow"
-                      : "bg-surface-raised border border-border text-zinc-400 hover:text-white"
-                  }`}
-                >
-                  {st.replace(/_/g, " ")}
-                </button>
-              )
+              (st) => {
+                const isThisUpdating = updatingStatus === st;
+                const isAnyUpdating = updatingStatus !== null;
+                const isCurrent = order.orderStatus === st;
+
+                return (
+                  <button
+                    key={st}
+                    onClick={() => handleStatusChange(st)}
+                    disabled={isAnyUpdating || isCurrent}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all flex items-center gap-1.5 ${
+                      isCurrent
+                        ? "bg-primary text-black font-black shadow-glow"
+                        : "bg-surface-raised border border-border text-zinc-400 hover:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                    }`}
+                  >
+                    {isThisUpdating && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />}
+                    <span>{st.replace(/_/g, " ")}</span>
+                  </button>
+                );
+              }
             )}
           </div>
         </div>
@@ -606,6 +627,75 @@ export default function AdminOrderDetailPage({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Invoice Quick Preview Modal Popup */}
+      {isPreviewInvoiceOpen && order && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
+          <div className="bg-[#121212] border border-border rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-surface-raised/60 gap-2">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary flex-shrink-0">
+                  <Receipt className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white font-heading">
+                    Invoice Preview: {order.invoice?.invoiceNumber || `INV-${order.orderNumber}`}
+                  </h3>
+                  <span className="text-xs text-zinc-400">
+                    Order #{order.orderNumber} • {order.customerName} ({order.customerPhone})
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={`/invoice/${order.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface border border-border hover:border-primary text-xs font-bold text-zinc-200 transition-colors"
+                  title="Open full page in new tab"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-primary" />
+                  <span>Full Page</span>
+                </a>
+                <button
+                  onClick={() => {
+                    const iframe = document.getElementById("order-invoice-preview-frame") as HTMLIFrameElement;
+                    if (iframe && iframe.contentWindow) {
+                      iframe.contentWindow.focus();
+                      iframe.contentWindow.print();
+                    } else {
+                      window.open(`/invoice/${order.id}`, "_blank");
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary-hover text-black text-xs font-extrabold shadow-glow uppercase tracking-wider transition-all"
+                >
+                  <Printer className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>Print</span>
+                </button>
+                <button
+                  onClick={() => setIsPreviewInvoiceOpen(false)}
+                  className="p-2 rounded-xl bg-surface border border-border text-zinc-400 hover:text-white hover:border-rose-500 transition-colors"
+                  aria-label="Close Preview"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body / Iframe */}
+            <div className="flex-1 w-full bg-[#0d0d0d] overflow-hidden p-2 sm:p-4">
+              <iframe
+                id="order-invoice-preview-frame"
+                src={`/invoice/${order.id}`}
+                title="Invoice Preview"
+                className="w-full h-[65vh] rounded-2xl border border-border/50 bg-[#0d0d0d]"
+              />
+            </div>
           </div>
         </div>
       )}

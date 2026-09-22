@@ -40,7 +40,7 @@ export default function DailyCombosSection({ combos }: DailyCombosSectionProps) 
             <Sparkles className="w-3.5 h-3.5 fill-primary" /> SPECIAL MIDNIGHT COMBO
           </div>
           <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight font-heading">
-            🔥 DAILY MIDNIGHT COMBOS
+             DAILY MIDNIGHT COMBOS
           </h2>
           <p className="text-xs sm:text-sm md:text-base text-zinc-300 max-w-xl mx-auto">
             Handcrafted chef specials designed for late-night hunger. Freshly curated and updated daily.

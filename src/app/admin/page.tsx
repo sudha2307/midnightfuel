@@ -299,72 +299,104 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Today's Orders */}
           <div className="p-5 rounded-2xl bg-surface border border-border flex items-center justify-between shadow-card">
-            <div>
+            <div className="flex-1">
               <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider block">
                 Today's Orders
               </span>
-              <span className="text-2xl sm:text-3xl font-black text-white mt-1 block">
-                {stats.todayOrdersCount}
+              <span
+                className={`text-2xl sm:text-3xl font-black text-white mt-1 block transition-all duration-300 ${
+                  isLoading ? "filter blur-md opacity-30 select-none animate-pulse" : "filter-none opacity-100"
+                }`}
+              >
+                {isLoading ? "00" : stats.todayOrdersCount}
               </span>
-              <span className="text-[11px] text-emerald-400 font-medium">
+              <span
+                className={`text-[11px] text-emerald-400 font-medium block transition-all duration-300 ${
+                  isLoading ? "filter blur-sm opacity-30 select-none" : "filter-none opacity-100"
+                }`}
+              >
                 Live across shift
               </span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary flex-shrink-0">
               <ShoppingBag className="w-6 h-6" />
             </div>
           </div>
 
           {/* Today's Sales */}
           <div className="p-5 rounded-2xl bg-surface border border-border flex items-center justify-between shadow-card">
-            <div>
+            <div className="flex-1">
               <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider block">
                 Today's Revenue
               </span>
-              <span className="text-2xl sm:text-3xl font-black text-primary mt-1 block">
-                {formatINR(stats.todaySales)}
+              <span
+                className={`text-2xl sm:text-3xl font-black text-primary mt-1 block transition-all duration-300 ${
+                  isLoading ? "filter blur-md opacity-30 select-none animate-pulse" : "filter-none opacity-100"
+                }`}
+              >
+                {isLoading ? "₹00,000" : formatINR(stats.todaySales)}
               </span>
-              <span className="text-[11px] text-zinc-400">
+              <span
+                className={`text-[11px] text-zinc-400 block transition-all duration-300 ${
+                  isLoading ? "filter blur-sm opacity-30 select-none" : "filter-none opacity-100"
+                }`}
+              >
                 Food: {formatINR(stats.foodSales || stats.todaySales)} • Delivery: {formatINR(stats.deliveryCollected || 0)}
               </span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400">
+            <div className="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400 flex-shrink-0">
               <IndianRupee className="w-6 h-6" />
             </div>
           </div>
 
           {/* Pending Orders */}
           <div className="p-5 rounded-2xl bg-surface border border-border flex items-center justify-between shadow-card">
-            <div>
+            <div className="flex-1">
               <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider block">
                 Pending Active
               </span>
-              <span className="text-2xl sm:text-3xl font-black text-amber-400 mt-1 block">
-                {stats.pendingOrdersCount}
+              <span
+                className={`text-2xl sm:text-3xl font-black text-amber-400 mt-1 block transition-all duration-300 ${
+                  isLoading ? "filter blur-md opacity-30 select-none animate-pulse" : "filter-none opacity-100"
+                }`}
+              >
+                {isLoading ? "00" : stats.pendingOrdersCount}
               </span>
-              <span className="text-[11px] text-amber-400 font-medium">
+              <span
+                className={`text-[11px] text-amber-400 font-medium block transition-all duration-300 ${
+                  isLoading ? "filter blur-sm opacity-30 select-none" : "filter-none opacity-100"
+                }`}
+              >
                 Kitchen in progress
               </span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+            <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 flex-shrink-0">
               <Clock className="w-6 h-6" />
             </div>
           </div>
 
           {/* Completed Orders */}
           <div className="p-5 rounded-2xl bg-surface border border-border flex items-center justify-between shadow-card">
-            <div>
+            <div className="flex-1">
               <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider block">
                 Completed
               </span>
-              <span className="text-2xl sm:text-3xl font-black text-emerald-400 mt-1 block">
-                {stats.completedOrdersCount}
+              <span
+                className={`text-2xl sm:text-3xl font-black text-emerald-400 mt-1 block transition-all duration-300 ${
+                  isLoading ? "filter blur-md opacity-30 select-none animate-pulse" : "filter-none opacity-100"
+                }`}
+              >
+                {isLoading ? "00" : stats.completedOrdersCount}
               </span>
-              <span className="text-[11px] text-emerald-400 font-medium">
+              <span
+                className={`text-[11px] text-emerald-400 font-medium block transition-all duration-300 ${
+                  isLoading ? "filter blur-sm opacity-30 select-none" : "filter-none opacity-100"
+                }`}
+              >
                 Delivered & settled
               </span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0">
               <CheckCircle2 className="w-6 h-6" />
             </div>
           </div>

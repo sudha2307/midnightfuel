@@ -454,15 +454,19 @@ export default function CheckoutPage() {
 
                   <div>
                     <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1">
-                      City *
+                      City / District *
                     </label>
-                    <input
-                      type="text"
+                    <select
                       required
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
-                      className="w-full rounded-xl bg-surface-raised border border-border px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-primary transition-colors min-h-[44px]"
-                    />
+                      className="w-full rounded-xl bg-surface-raised border border-border px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-primary transition-colors min-h-[44px] font-bold cursor-default"
+                    >
+                      <option value="Tirunelveli">Tirunelveli (Service Area)</option>
+                    </select>
+                    <span className="text-[10px] text-primary font-semibold block mt-1">
+                      ⚡ Midnight delivery exclusively across Tirunelveli
+                    </span>
                   </div>
 
                   <div className="sm:col-span-2">

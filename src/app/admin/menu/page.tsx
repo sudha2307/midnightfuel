@@ -273,99 +273,135 @@ export default function AdminMenuPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">
-                {filteredProducts.map((p) => (
-                  <tr key={p.id} className="hover:bg-surface-raised/40 transition-colors">
-                    {/* Image */}
-                    <td className="py-3.5 px-6">
-                      <img
-                        src={p.image}
-                        alt={p.name}
-                        className="w-12 h-12 rounded-xl object-cover border border-border flex-shrink-0"
-                      />
-                    </td>
-
-                    {/* Dish name & details */}
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-white text-sm">
-                          {p.name}
-                        </span>
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            p.isVeg ? "bg-emerald-500" : "bg-rose-500"
-                          }`}
-                          title={p.isVeg ? "Veg" : "Non-Veg"}
-                        />
-                        {p.isPopular && (
-                          <span className="px-1.5 py-0.5 rounded bg-primary/20 text-primary text-[10px] font-black uppercase">
-                            ★ Best Seller
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-zinc-400 line-clamp-1 max-w-xs mt-0.5">
-                        {p.description}
-                      </p>
-                    </td>
-
-                    {/* Category */}
-                    <td className="py-3.5 px-4 font-semibold text-zinc-300">
-                      {p.category?.name || "N/A"}
-                    </td>
-
-                    {/* Price */}
-                    <td className="py-3.5 px-4 font-extrabold text-white text-sm">
-                      {formatINR(p.price)}
-                    </td>
-
-                    {/* Availability Toggle */}
-                    <td className="py-3.5 px-4">
-                      <button
-                        onClick={() => handleToggleAvailability(p)}
-                        className={`px-3 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 border transition-all ${
-                          p.isAvailable
-                            ? "bg-emerald-950/60 border-emerald-500/50 text-emerald-400"
-                            : "bg-rose-950/60 border-rose-500/50 text-rose-400"
-                        }`}
-                      >
-                        {p.isAvailable ? (
-                          <>
-                            <Eye className="w-3 h-3" /> Available
-                          </>
-                        ) : (
-                          <>
-                            <EyeOff className="w-3 h-3" /> Unavailable
-                          </>
-                        )}
-                      </button>
-                    </td>
-
-                    {/* Prep Time */}
-                    <td className="py-3.5 px-4 text-zinc-400 font-medium">
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-primary" />
-                        <span>{p.preparationTime} min</span>
-                      </div>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="py-3.5 px-6 text-right space-x-2">
-                      <button
-                        onClick={() => openEditModal(p)}
-                        className="p-2 rounded-lg bg-surface-raised hover:bg-surface border border-border text-zinc-300 hover:text-white transition-colors"
-                        title="Edit Food Item"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteModal({ id: p.id, name: p.name })}
-                        className="p-2 rounded-lg bg-surface-raised hover:bg-rose-950/50 border border-border text-zinc-300 hover:text-rose-400 transition-colors"
-                        title="Delete Food Item"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                {isLoading ? (
+                  [1, 2, 3, 4, 5, 6].map((i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="py-3.5 px-6">
+                        <div className="w-12 h-12 rounded-xl bg-zinc-800" />
+                      </td>
+                      <td className="py-3.5 px-4 space-y-1.5">
+                        <div className="w-40 h-4 rounded bg-zinc-800" />
+                        <div className="w-60 h-3 rounded bg-zinc-800/60" />
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="w-20 h-4 rounded bg-zinc-800" />
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="w-14 h-5 rounded bg-zinc-800" />
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="w-24 h-6 rounded-full bg-zinc-800" />
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="w-16 h-4 rounded bg-zinc-800" />
+                      </td>
+                      <td className="py-3.5 px-6 text-right space-x-2">
+                        <div className="inline-block w-8 h-8 rounded-lg bg-zinc-800" />
+                        <div className="inline-block w-8 h-8 rounded-lg bg-zinc-800" />
+                      </td>
+                    </tr>
+                  ))
+                ) : filteredProducts.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-zinc-500">
+                      No food items match your selected filter or search query.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredProducts.map((p) => (
+                    <tr key={p.id} className="hover:bg-surface-raised/40 transition-colors">
+                      {/* Image */}
+                      <td className="py-3.5 px-6">
+                        <img
+                          src={p.image}
+                          alt={p.name}
+                          className="w-12 h-12 rounded-xl object-cover border border-border flex-shrink-0"
+                        />
+                      </td>
+
+                      {/* Dish name & details */}
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-white text-sm">
+                            {p.name}
+                          </span>
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              p.isVeg ? "bg-emerald-500" : "bg-rose-500"
+                            }`}
+                            title={p.isVeg ? "Veg" : "Non-Veg"}
+                          />
+                          {p.isPopular && (
+                            <span className="px-1.5 py-0.5 rounded bg-primary/20 text-primary text-[10px] font-black uppercase">
+                              ★ Best Seller
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-zinc-400 line-clamp-1 max-w-xs mt-0.5">
+                          {p.description}
+                        </p>
+                      </td>
+
+                      {/* Category */}
+                      <td className="py-3.5 px-4 font-semibold text-zinc-300">
+                        {p.category?.name || "N/A"}
+                      </td>
+
+                      {/* Price */}
+                      <td className="py-3.5 px-4 font-extrabold text-white text-sm">
+                        {formatINR(p.price)}
+                      </td>
+
+                      {/* Availability Toggle */}
+                      <td className="py-3.5 px-4">
+                        <button
+                          onClick={() => handleToggleAvailability(p)}
+                          className={`px-3 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 border transition-all ${
+                            p.isAvailable
+                              ? "bg-emerald-950/60 border-emerald-500/50 text-emerald-400"
+                              : "bg-rose-950/60 border-rose-500/50 text-rose-400"
+                          }`}
+                        >
+                          {p.isAvailable ? (
+                            <>
+                              <Eye className="w-3 h-3" /> Available
+                            </>
+                          ) : (
+                            <>
+                              <EyeOff className="w-3 h-3" /> Unavailable
+                            </>
+                          )}
+                        </button>
+                      </td>
+
+                      {/* Prep Time */}
+                      <td className="py-3.5 px-4 text-zinc-400 font-medium">
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-primary" />
+                          <span>{p.preparationTime} min</span>
+                        </div>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-3.5 px-6 text-right space-x-2">
+                        <button
+                          onClick={() => openEditModal(p)}
+                          className="p-2 rounded-lg bg-surface-raised hover:bg-surface border border-border text-zinc-300 hover:text-white transition-colors"
+                          title="Edit Food Item"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteModal({ id: p.id, name: p.name })}
+                          className="p-2 rounded-lg bg-surface-raised hover:bg-rose-950/50 border border-border text-zinc-300 hover:text-rose-400 transition-colors"
+                          title="Delete Food Item"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -373,85 +409,111 @@ export default function AdminMenuPage() {
 
         {/* 2. MOBILE VIEW: Responsive Cards Grid (Shown on <md screens) */}
         <div className="md:hidden space-y-3">
-          {filteredProducts.map((p) => (
-            <div
-              key={p.id}
-              className="p-4 rounded-2xl bg-surface border border-border space-y-3 shadow-card"
-            >
-              <div className="flex items-start gap-3">
-                <img
-                  src={p.image}
-                  alt={p.name}
-                  className="w-16 h-16 rounded-xl object-cover border border-border flex-shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <h4 className="font-bold text-white text-sm truncate">{p.name}</h4>
-                    <span
-                      className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                        p.isVeg ? "bg-emerald-500" : "bg-rose-500"
-                      }`}
-                    />
-                  </div>
-                  <span className="text-xs text-zinc-400 block mt-0.5">
-                    Category: <strong className="text-zinc-200">{p.category?.name || "N/A"}</strong>
-                  </span>
-                  <div className="flex items-center justify-between mt-1">
-                    <span className="text-base font-black text-primary">
-                      {formatINR(p.price)}
-                    </span>
-                    <span className="text-[11px] text-zinc-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-primary" /> {p.preparationTime} min
-                    </span>
+          {isLoading ? (
+            [1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="p-4 rounded-2xl bg-surface border border-border space-y-3 shadow-card animate-pulse"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-16 h-16 rounded-xl bg-zinc-800 flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="w-32 h-4 rounded bg-zinc-800" />
+                    <div className="w-20 h-3 rounded bg-zinc-800/60" />
+                    <div className="w-16 h-4 rounded bg-zinc-800" />
                   </div>
                 </div>
-              </div>
-
-              {p.description && (
-                <p className="text-[11px] text-zinc-400 line-clamp-2">
-                  {p.description}
-                </p>
-              )}
-
-              {/* Status & Actions Row */}
-              <div className="pt-2.5 border-t border-border/60 flex items-center justify-between gap-2">
-                <button
-                  onClick={() => handleToggleAvailability(p)}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all min-h-[40px] ${
-                    p.isAvailable
-                      ? "bg-emerald-950/60 border-emerald-500/50 text-emerald-400"
-                      : "bg-rose-950/60 border-rose-500/50 text-rose-400"
-                  }`}
-                >
-                  {p.isAvailable ? (
-                    <>
-                      <Eye className="w-3.5 h-3.5" /> <span>🟢 ON</span>
-                    </>
-                  ) : (
-                    <>
-                      <EyeOff className="w-3.5 h-3.5" /> <span>🔴 OFF</span>
-                    </>
-                  )}
-                </button>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => openEditModal(p)}
-                    className="px-3.5 py-2 rounded-xl bg-surface-raised border border-border text-white text-xs font-bold flex items-center gap-1.5 min-h-[40px]"
-                  >
-                    <Edit2 className="w-3.5 h-3.5 text-primary" /> Edit
-                  </button>
-                  <button
-                    onClick={() => setDeleteModal({ id: p.id, name: p.name })}
-                    className="p-2.5 rounded-xl bg-surface-raised hover:bg-rose-950/50 border border-border text-zinc-300 hover:text-rose-400 min-h-[40px] min-w-[40px] flex items-center justify-center"
-                    aria-label="Delete item"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                <div className="pt-2.5 border-t border-border/60 flex items-center justify-between gap-2">
+                  <div className="w-24 h-9 rounded-xl bg-zinc-800" />
+                  <div className="w-20 h-9 rounded-xl bg-zinc-800" />
                 </div>
               </div>
+            ))
+          ) : filteredProducts.length === 0 ? (
+            <div className="p-8 text-center bg-surface border border-border rounded-2xl text-zinc-500 text-xs">
+              No food items found matching your filters.
             </div>
-          ))}
+          ) : (
+            filteredProducts.map((p) => (
+              <div
+                key={p.id}
+                className="p-4 rounded-2xl bg-surface border border-border space-y-3 shadow-card"
+              >
+                <div className="flex items-start gap-3">
+                  <img
+                    src={p.image}
+                    alt={p.name}
+                    className="w-16 h-16 rounded-xl object-cover border border-border flex-shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="font-bold text-white text-sm truncate">{p.name}</h4>
+                      <span
+                        className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                          p.isVeg ? "bg-emerald-500" : "bg-rose-500"
+                        }`}
+                      />
+                    </div>
+                    <span className="text-xs text-zinc-400 block mt-0.5">
+                      Category: <strong className="text-zinc-200">{p.category?.name || "N/A"}</strong>
+                    </span>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-base font-black text-primary">
+                        {formatINR(p.price)}
+                      </span>
+                      <span className="text-[11px] text-zinc-400 flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-primary" /> {p.preparationTime} min
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {p.description && (
+                  <p className="text-[11px] text-zinc-400 line-clamp-2">
+                    {p.description}
+                  </p>
+                )}
+
+                {/* Status & Actions Row */}
+                <div className="pt-2.5 border-t border-border/60 flex items-center justify-between gap-2">
+                  <button
+                    onClick={() => handleToggleAvailability(p)}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all min-h-[40px] ${
+                      p.isAvailable
+                        ? "bg-emerald-950/60 border-emerald-500/50 text-emerald-400"
+                        : "bg-rose-950/60 border-rose-500/50 text-rose-400"
+                    }`}
+                  >
+                    {p.isAvailable ? (
+                      <>
+                        <Eye className="w-3.5 h-3.5" /> <span>🟢 ON</span>
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="w-3.5 h-3.5" /> <span>🔴 OFF</span>
+                      </>
+                    )}
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => openEditModal(p)}
+                      className="px-3.5 py-2 rounded-xl bg-surface-raised border border-border text-white text-xs font-bold flex items-center gap-1.5 min-h-[40px]"
+                    >
+                      <Edit2 className="w-3.5 h-3.5 text-primary" /> Edit
+                    </button>
+                    <button
+                      onClick={() => setDeleteModal({ id: p.id, name: p.name })}
+                      className="p-2.5 rounded-xl bg-surface-raised hover:bg-rose-950/50 border border-border text-zinc-300 hover:text-rose-400 min-h-[40px] min-w-[40px] flex items-center justify-center"
+                      aria-label="Delete item"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </main>
 
