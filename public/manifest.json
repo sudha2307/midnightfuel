@@ -1,0 +1,21 @@
+{
+  "name": "Midnight Fuel",
+  "short_name": "Midnight Fuel",
+  "description": "Indian late-night cloud kitchen serving from 7:00 PM to 2:00 AM",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#FF7A00",
+  "icons": [
+    {
+      "src": "/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

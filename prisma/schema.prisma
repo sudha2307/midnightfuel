@@ -1,0 +1,302 @@
+// Midnight Fuel Prisma Database Schema
+// Optimized for SQLite local development and PostgreSQL production deployment
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  name         String
+  username     String   @unique @default("admin")
+  passwordHash String
+  role         String   @default("ADMIN")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Customer {
+  id        String    @id @default(cuid())
+  name      String
+  phone     String    @unique
+  whatsapp  String?
+  addresses Address[]
+  orders    Order[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  houseNo    String
+  streetArea String
+  landmark   String?
+  city       String   @default("Tirunelveli")
+  pincode    String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  image       String?
+  order       Int       @default(0)
+  isActive    Boolean   @default(true)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id              String         @id @default(cuid())
+  categoryId      String
+  category        Category       @relation(fields: [categoryId], references: [id])
+  name            String
+  slug            String         @unique
+  description     String
+  price           Float
+  image           String
+  isVeg           Boolean        @default(false)
+  isAvailable     Boolean        @default(true) // Admin quick ON/OFF switch
+  isFeatured      Boolean        @default(false)
+  isPopular       Boolean        @default(false)
+  isDeleted       Boolean        @default(false) // Soft deletion to preserve order history
+  preparationTime Int            @default(20)   // in minutes
+  orderItems      OrderItem[]
+  comboItems      ComboItem[]
+  priceHistories  PriceHistory[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model PriceHistory {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  oldPrice  Float
+  newPrice  Float
+  changedBy String   @default("Admin")
+  changedAt DateTime @default(now())
+}
+
+// Daily Combos Model
+model Combo {
+  id             String              @id @default(cuid())
+  comboNumber    Int                 @default(1) // 1, 2, 3...
+  name           String
+  description    String?
+  image          String?
+  servingPeople  String?             // e.g. "Serves 3 People"
+  price          Float
+  originalPrice  Float?              // For strikethrough comparison
+  isActive       Boolean             @default(true) // ON / OFF
+  displayOrder   Int                 @default(0)
+  validFrom      DateTime?
+  validUntil     DateTime?
+  items          ComboItem[]
+  priceHistories ComboPriceHistory[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+}
+
+model ComboItem {
+  id             String   @id @default(cuid())
+  comboId        String
+  combo          Combo    @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  productId      String?
+  product        Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  customItemName String?  // Optional name for extras like Daqoos, Mayo, or custom side
+  quantity       Int      @default(1)
+}
+
+model ComboPriceHistory {
+  id        String   @id @default(cuid())
+  comboId   String
+  combo     Combo    @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  oldPrice  Float
+  newPrice  Float
+  changedBy String   @default("Admin")
+  changedAt DateTime @default(now())
+}
+
+// Distance Slabs for Delivery Suggestions
+model DeliveryDistanceSlab {
+  id            String   @id @default(cuid())
+  minDistanceKm Float
+  maxDistanceKm Float
+  defaultCharge Float
+  displayOrder  Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Order {
+  id                    String                       @id @default(cuid())
+  orderNumber           String                       @unique // e.g. MF10001
+  customerId            String?
+  customer              Customer?                    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerName          String
+  customerPhone         String
+  customerWhatsapp      String
+  orderType             String                       @default("DELIVERY") // DELIVERY | PICKUP
+  deliveryAddress       String?                      // Full formatted address
+  deliveryDistanceKm    Float?                       // Admin-determined delivery distance in KM
+  specialNote           String?                      // Customer Special Request (0/300 chars, no extra charge)
+  internalKitchenNote   String?                      // Private Admin/Kitchen Note
+  subtotal              Float                        // Total of all products & combos
+  deliveryCharge        Float                        @default(0) // Distance-based charge (no GST)
+  grandTotal            Float                        // subtotal + deliveryCharge
+  paymentMethod         String                       @default("COD") // COD | UPI
+  paymentStatus         String                       @default("PENDING") // PENDING | VERIFICATION_PENDING | PAID | FAILED | REFUNDED
+  orderStatus           String                       @default("NEW") // NEW | CONFIRMED | PREPARING | READY | OUT_FOR_DELIVERY | DELIVERED | CANCELLED
+  estimatedDeliveryTime DateTime?
+  items                 OrderItem[]
+  combos                OrderCombo[]
+  payment               Payment?
+  invoice               Invoice?
+  deliveryHistory       OrderDeliveryChargeHistory[]
+  notifications         Notification[]
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
+
+  @@index([createdAt])
+  @@index([orderStatus])
+  @@index([customerId])
+  @@index([customerPhone])
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productName String
+  unitPrice   Float
+  quantity    Int
+  totalPrice  Float
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// Order Combo Snapshot (Retains exact state of combo at time of purchase)
+model OrderCombo {
+  id                    String           @id @default(cuid())
+  orderId               String
+  order                 Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  comboId               String?
+  comboNameSnapshot     String
+  priceSnapshot         Float
+  servingPeopleSnapshot String?
+  quantity              Int              @default(1)
+  totalPrice            Float
+  items                 OrderComboItem[]
+
+  @@index([orderId])
+}
+
+model OrderComboItem {
+  id                  String     @id @default(cuid())
+  orderComboId        String
+  orderCombo          OrderCombo @relation(fields: [orderComboId], references: [id], onDelete: Cascade)
+  productNameSnapshot String
+  quantitySnapshot    Int
+  priceSnapshot       Float      @default(0)
+
+  @@index([orderComboId])
+}
+
+// Delivery Charge Audit Trail
+model OrderDeliveryChargeHistory {
+  id                String   @id @default(cuid())
+  orderId           String
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  oldDistance       Float?
+  newDistance       Float?
+  oldDeliveryCharge Float
+  newDeliveryCharge Float
+  changedBy         String   @default("Admin")
+  changedAt         DateTime @default(now())
+
+  @@index([orderId])
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  orderId         String   @unique
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount          Float
+  currency        String   @default("INR")
+  method          String   // COD | UPI
+  transactionId   String?
+  status          String   @default("PENDING") // PENDING | VERIFICATION_PENDING | PAID | FAILED | REFUNDED
+  gatewayResponse String?  // JSON string
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([method])
+}
+
+model Invoice {
+  id             String   @id @default(cuid())
+  invoiceNumber  String   @unique // e.g. INV-MF-10001
+  orderId        String   @unique
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  subtotal       Float
+  deliveryCharge Float    @default(0)
+  totalAmount    Float    // subtotal + deliveryCharge (NO GST)
+  pdfUrl         String?
+  whatsappStatus String   @default("PENDING")
+  issuedAt       DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type      String   // WHATSAPP | SMS | IN_APP
+  recipient String
+  subject   String?
+  content   String
+  status    String   @default("SENT") // SENT | FAILED | PENDING
+  sentAt    DateTime @default(now())
+}
+
+model BusinessSettings {
+  id            String   @id @default("default-settings")
+  businessName  String   @default("Midnight Fuel")
+  tagline       String   @default("EAT • ENJOY • RECHARGE")
+  logoUrl       String   @default("/images/logo.png")
+  phone         String   @default("+91 79042 04664")
+  whatsapp      String   @default("+91 79042 04664")
+  address       String   @default("123 Food Street, Late Night Hub, Tirunelveli - 627001")
+  city          String   @default("Tirunelveli")
+  openingTime   String   @default("19:00") // 7:00 PM
+  closingTime   String   @default("02:00") // 2:00 AM
+  minOrderAmount Float   @default(199)
+  upiId         String   @default("midnightfuel@upi")
+  isCashEnabled Boolean  @default(true)
+  isUpiEnabled  Boolean  @default(true)
+  currency      String   @default("INR")
+  timezone      String   @default("Asia/Kolkata")
+  storeMode     String   @default("AUTO")  // AUTO | FORCE_OPEN | FORCE_CLOSED
+  isForceOpen   Boolean  @default(false)
+  isForceClosed Boolean  @default(false)
+  updatedAt     DateTime @updatedAt
+}
