@@ -10,13 +10,14 @@ import {
   ShoppingBag,
   Truck,
   UtensilsCrossed,
+  Sparkles,
 } from "lucide-react";
 import prisma from "@/lib/prisma";
 import Navbar from "@/components/customer/Navbar";
 import Footer from "@/components/customer/Footer";
 import FoodCard from "@/components/customer/FoodCard";
 import DailyCombosSection from "@/components/customer/DailyCombosSection";
-import { ComboType } from "@/types";
+import { ComboType, ProductType } from "@/types";
 
 import { formatTime12Hour } from "@/lib/business-hours";
 
@@ -50,6 +51,14 @@ async function getHomePageData() {
       }),
     ]);
 
+    let todaySpecialProduct = null;
+    if (settings?.todaySpecialProductId) {
+      todaySpecialProduct = await prisma.product.findUnique({
+        where: { id: settings.todaySpecialProductId, isDeleted: false },
+        include: { category: true },
+      });
+    }
+
     const now = new Date();
 
     const formattedCombos = combos
@@ -76,19 +85,33 @@ async function getHomePageData() {
         };
       });
 
-    return { popularProducts, categories, combos: formattedCombos as unknown as ComboType[], settings };
+    return {
+      popularProducts,
+      categories,
+      combos: formattedCombos as unknown as ComboType[],
+      settings,
+      todaySpecialProduct: todaySpecialProduct as unknown as ProductType | null,
+    };
   } catch (e) {
     console.error("Failed to load homepage data", e);
-    return { popularProducts: [], categories: [], combos: [], settings: null };
+    return { popularProducts: [], categories: [], combos: [], settings: null, todaySpecialProduct: null };
   }
 }
 
 export default async function HomePage() {
-  const { popularProducts, categories, combos, settings } = await getHomePageData();
+  const { popularProducts, categories, combos, settings, todaySpecialProduct } = await getHomePageData();
 
   const businessName = settings?.businessName || "Midnight Fuel";
   const openTimeDisplay = formatTime12Hour(settings?.openingTime || "19:00");
   const closeTimeDisplay = formatTime12Hour(settings?.closingTime || "02:00");
+
+  const specialDish = todaySpecialProduct || popularProducts[0] || {
+    id: "default",
+    name: "Grill Chicken Mandhi",
+    description: "Yemeni Spiced • Toum Dip • Fragrant Rice",
+    price: 220,
+    image: "https://t3.ftcdn.net/jpg/08/04/74/12/240_F_804741299_BYgXICzscExPiPDTWPVh3n0jel9nVtHT.jpg",
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground pb-20 md:pb-0">
@@ -166,32 +189,39 @@ export default async function HomePage() {
                 </div>
               </div>
 
-              {/* Right Hero Visual Feature */}
+              {/* Right Hero Visual Feature - Kitchen Today Special */}
               <div className="lg:col-span-5 relative mt-4 lg:mt-0">
                 <div className="relative mx-auto max-w-sm sm:max-w-md lg:max-w-none">
                   {/* Glowing card container */}
-                  <div className="relative rounded-3xl overflow-hidden border border-border/80 bg-surface shadow-2xl p-2">
-                    <img
-                      src="https://t3.ftcdn.net/jpg/08/04/74/12/240_F_804741299_BYgXICzscExPiPDTWPVh3n0jel9nVtHT.jpg"
-                      alt="Grill Chicken Mandhi"
-                      className="w-full aspect-[4/3] object-cover rounded-2xl"
-                    />
-                    <div className="absolute inset-x-2 bottom-2 p-3.5 sm:p-5 bg-gradient-to-t from-black via-black/80 to-transparent rounded-2xl flex items-end justify-between">
-                      <div>
-                        <span className="px-2 py-0.5 rounded-full bg-primary text-black text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider inline-block mb-1">
-                          Signature Dish
-                        </span>
-                        <h3 className="text-base sm:text-xl font-extrabold text-white">
-                          Grill Chicken Mandhi
-                        </h3>
-                        <p className="text-[10px] sm:text-xs text-zinc-300">Yemeni Spiced • Toum Dip • Fragrant Rice</p>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[10px] sm:text-xs text-zinc-400 block">From</span>
-                        <span className="text-xl sm:text-2xl font-black text-primary">₹220</span>
+                  <Link
+                    href={specialDish.id && specialDish.id !== "default" ? `/product/${specialDish.id}` : "/menu"}
+                    className="group block relative rounded-3xl overflow-hidden border border-border/80 bg-surface shadow-2xl p-2 hover:border-primary/60 transition-all hover:scale-[1.01]"
+                  >
+                    <div className="relative overflow-hidden rounded-2xl">
+                      <img
+                        src={specialDish.image || "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop&q=80"}
+                        alt={specialDish.name}
+                        className="w-full aspect-[4/3] object-cover rounded-2xl group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 p-3.5 sm:p-5 bg-gradient-to-t from-black via-black/80 to-transparent flex items-end justify-between">
+                        <div className="max-w-[70%]">
+                          <span className="px-2.5 py-0.5 rounded-full bg-primary text-black text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider inline-flex items-center gap-1 mb-1 shadow-glow">
+                            <Sparkles className="w-3 h-3 fill-black" /> Kitchen Today Special
+                          </span>
+                          <h3 className="text-base sm:text-xl font-extrabold text-white line-clamp-1 group-hover:text-primary transition-colors">
+                            {specialDish.name}
+                          </h3>
+                          <p className="text-[10px] sm:text-xs text-zinc-300 line-clamp-1">
+                            {specialDish.description || "Freshly prepared by our master chefs tonight"}
+                          </p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <span className="text-[10px] sm:text-xs text-zinc-400 block">From</span>
+                          <span className="text-xl sm:text-2xl font-black text-primary">₹{specialDish.price}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -201,7 +231,7 @@ export default async function HomePage() {
         {/* ===================================================
             CATEGORY QUICK SCROLLER
             =================================================== */}
-        <section className="py-4 sm:py-6 border-y border-border/60 bg-surface/40">
+        {/* <section className="py-4 sm:py-6 border-y border-border/60 bg-surface/40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1 scrollbar-none">
               <Link
@@ -221,7 +251,7 @@ export default async function HomePage() {
               ))}
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* ===================================================
             🔥 DAILY COMBOS SECTION

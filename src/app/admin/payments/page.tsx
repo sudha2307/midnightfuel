@@ -104,6 +104,9 @@ export default function AdminPaymentsPage() {
     const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
 
     return payments.filter((p) => {
+      // Exclude payments for cancelled orders
+      if (p.order?.orderStatus === "CANCELLED") return false;
+
       const pDate = new Date(p.createdAt);
 
       // Date preset check

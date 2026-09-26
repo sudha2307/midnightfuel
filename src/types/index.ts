@@ -230,4 +230,6 @@ export interface BusinessSettingsType {
   timezone: string;
   isForceOpen: boolean;
   isForceClosed: boolean;
+  todaySpecialProductId?: string | null;
+  todaySpecialProduct?: ProductType | null;
 }

@@ -77,7 +77,7 @@ function OrderSuccessContent() {
 
           {/* WhatsApp Updates */}
           <a
-            href={`https://wa.me/917904204664?text=Hi%2C%20I%20placed%20order%20%23${orderNumber}%20at%20Midnight%20Fuel.%20Please%20send%20me%20updates.`}
+            href={`https://wa.me/919080139363?text=Hi%2C%20I%20placed%20order%20%23${orderNumber}%20at%20Midnight%20Fuel.%20Please%20send%20me%20updates.`}
             target="_blank"
             rel="noopener noreferrer"
             className="p-4 rounded-2xl bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-800 text-emerald-400 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all"

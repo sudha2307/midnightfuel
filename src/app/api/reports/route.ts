@@ -17,9 +17,13 @@ export async function GET(req: NextRequest) {
 
     const now = new Date();
     let startDate: Date | null = null;
+    let endDate: Date | null = null;
 
     if (range === "today") {
       startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    } else if (range === "yesterday") {
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0);
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59, 999);
     } else if (range === "week" || range === "7d") {
       startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7, 0, 0, 0);
     } else if (range === "month" || range === "30d") {
@@ -27,17 +31,26 @@ export async function GET(req: NextRequest) {
     }
 
     const whereClause: any = {};
-    if (startDate) {
+    if (startDate && endDate) {
+      whereClause.createdAt = { gte: startDate, lte: endDate };
+    } else if (startDate) {
       whereClause.createdAt = { gte: startDate };
     }
 
     const allOrders = await prisma.order.findMany({
       where: whereClause,
       include: {
+        customer: true,
         items: true,
-        combos: true,
+        combos: {
+          include: {
+            items: true,
+          },
+        },
+        payment: true,
+        invoice: true,
       },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
     });
 
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
@@ -190,6 +203,8 @@ export async function GET(req: NextRequest) {
       popularProducts,
       paymentDistribution,
       statusDistribution,
+      orders: allOrders,
+      range,
     });
   } catch (error: any) {
     return NextResponse.json(

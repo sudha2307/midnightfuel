@@ -48,7 +48,10 @@ export function checkIsStoreOpen(
   let currentMinute = targetDate.getMinutes();
 
   for (const part of dateInTz) {
-    if (part.type === "hour") currentHour = parseInt(part.value, 10);
+    if (part.type === "hour") {
+      const h = parseInt(part.value, 10);
+      currentHour = h === 24 ? 0 : h;
+    }
     if (part.type === "minute") currentMinute = parseInt(part.value, 10);
   }
 

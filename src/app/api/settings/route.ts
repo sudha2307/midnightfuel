@@ -21,12 +21,20 @@ export async function GET() {
           isCashEnabled: true,
           isUpiEnabled: true,
           upiId: "midnightfuel@upi",
-          phone: "+91 79042 04664",
-          whatsapp: "+91 79042 04664",
+          phone: "+91 90801 39363",
+          whatsapp: "+91 90801 39363",
           address: "123 Food Street, Late Night Hub, Tirunelveli - 627001",
           city: "Tirunelveli",
           minOrderAmount: 199,
         },
+      });
+    }
+
+    let todaySpecialProduct = null;
+    if (settings.todaySpecialProductId) {
+      todaySpecialProduct = await prisma.product.findUnique({
+        where: { id: settings.todaySpecialProductId },
+        include: { category: true },
       });
     }
 
@@ -38,7 +46,7 @@ export async function GET() {
     });
 
     return NextResponse.json(
-      { success: true, settings, storeStatus },
+      { success: true, settings: { ...settings, todaySpecialProduct }, storeStatus },
       {
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
@@ -101,6 +109,10 @@ export async function PUT(req: NextRequest) {
       data.storeMode = data.isForceOpen ? "FORCE_OPEN" : data.isForceClosed ? "FORCE_CLOSED" : "AUTO";
     }
 
+    if (body.todaySpecialProductId !== undefined) {
+      data.todaySpecialProductId = body.todaySpecialProductId ? String(body.todaySpecialProductId).trim() : null;
+    }
+
     const updated = await prisma.businessSettings.upsert({
       where: { id: "default-settings" },
       update: data,
@@ -108,8 +120,8 @@ export async function PUT(req: NextRequest) {
         id: "default-settings",
         businessName: data.businessName || "Midnight Fuel",
         tagline: data.tagline || "EAT • ENJOY • RECHARGE",
-        phone: data.phone || "+91 98765 43210",
-        whatsapp: data.whatsapp || "+91 98765 43210",
+        phone: data.phone || "+91 90801 39363",
+        whatsapp: data.whatsapp || "+91 90801 39363",
         address: data.address || "123 Food Street, Late Night Hub, Tirunelveli - 627001",
         city: data.city || "Tirunelveli",
         openingTime: data.openingTime || "19:00",
@@ -121,8 +133,17 @@ export async function PUT(req: NextRequest) {
         isForceClosed: data.isForceClosed ?? false,
         isCashEnabled: data.isCashEnabled !== undefined ? Boolean(data.isCashEnabled) : true,
         isUpiEnabled: data.isUpiEnabled !== undefined ? Boolean(data.isUpiEnabled) : true,
+        todaySpecialProductId: data.todaySpecialProductId || null,
       },
     });
+
+    let todaySpecialProduct = null;
+    if (updated.todaySpecialProductId) {
+      todaySpecialProduct = await prisma.product.findUnique({
+        where: { id: updated.todaySpecialProductId },
+        include: { category: true },
+      });
+    }
 
     const storeStatus = getStoreStatus({
       openingTime: updated.openingTime,
@@ -132,7 +153,7 @@ export async function PUT(req: NextRequest) {
     });
 
     return NextResponse.json(
-      { success: true, settings: updated, storeStatus },
+      { success: true, settings: { ...updated, todaySpecialProduct }, storeStatus },
       {
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",

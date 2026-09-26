@@ -71,7 +71,7 @@ export function generateWhatsAppMessageText({
       return `🌙 MIDNIGHT FUEL\n\nHi ${customerName}!\n\nYour order #${orderNumber} has been successfully delivered.\n\nEnjoy your midnight feast!\nEAT • ENJOY • RECHARGE 🌙`;
 
     case "CANCELLED":
-      return `🌙 MIDNIGHT FUEL\n\nHi ${customerName},\n\nYour order #${orderNumber} has been cancelled. For any queries, reach us directly on WhatsApp support (+91 79042 04664).`;
+      return `🌙 MIDNIGHT FUEL\n\nHi ${customerName},\n\nYour order #${orderNumber} has been cancelled. For any queries, reach us directly on WhatsApp support (+91 90801 39363).`;
 
     default:
       return `🌙 MIDNIGHT FUEL\n\nHi ${customerName},\n\nYour order #${orderNumber} status update: ${status}.${noteSection}`;

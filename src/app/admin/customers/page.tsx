@@ -11,6 +11,8 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
+  Download,
+  FileSpreadsheet,
 } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import { formatINR, formatDate, getStatusInfo } from "@/lib/utils";
@@ -50,6 +52,72 @@ export default function AdminCustomersPage() {
     currentPage * ITEMS_PER_PAGE
   );
 
+  // CSV Export Handler
+  const handleExportCSV = () => {
+    if (!customers || customers.length === 0) return;
+
+    const escapeCsv = (str: any) => {
+      if (str === null || str === undefined) return '""';
+      const clean = String(str).replace(/"/g, '""');
+      return `"${clean}"`;
+    };
+
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const rows: string[] = [];
+
+    // Header
+    rows.push("MIDNIGHT FUEL - CUSTOMER DATABASE DIRECTORY");
+    rows.push(`Export Date,${escapeCsv(new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }))}`);
+    rows.push(`Total Customers,${customers.length}`);
+    if (search.trim()) {
+      rows.push(`Search Filter,${escapeCsv(search)}`);
+    }
+    rows.push("");
+
+    rows.push([
+      "Customer Name",
+      "Mobile Phone",
+      "WhatsApp Number",
+      "Total Orders Count",
+      "Lifetime Spent (INR)",
+      "Last Order Number",
+      "Last Order Date (IST)",
+      "Customer Since (IST)",
+    ].map(escapeCsv).join(","));
+
+    for (const c of customers) {
+      const lastOrderDate = c.lastOrderDate
+        ? new Date(c.lastOrderDate).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+        : "No Orders Yet";
+
+      const createdDate = c.createdAt
+        ? new Date(c.createdAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+        : "N/A";
+
+      rows.push([
+        c.name,
+        `+91 ${c.phone}`,
+        c.whatsapp ? `+91 ${c.whatsapp}` : `+91 ${c.phone}`,
+        c.totalOrders ?? c._count?.orders ?? 0,
+        c.totalSpent ?? 0,
+        c.lastOrderNumber || "N/A",
+        lastOrderDate,
+        createdDate,
+      ].map(escapeCsv).join(","));
+    }
+
+    const csvContent = "\uFEFF" + rows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `midnight_fuel_customers_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex-1 pb-16">
       <AdminHeader
@@ -58,8 +126,8 @@ export default function AdminCustomersPage() {
       />
 
       <main className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-        {/* Search Bar */}
-        <div className="p-4 rounded-2xl bg-surface border border-border flex flex-col sm:flex-row items-center justify-between gap-3">
+        {/* Search Bar & Actions */}
+        <div className="p-4 rounded-2xl bg-surface border border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="relative w-full sm:w-96">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
             <input
@@ -71,9 +139,22 @@ export default function AdminCustomersPage() {
             />
           </div>
 
-          <span className="text-xs text-zinc-400 self-start sm:self-auto">
-            Total Customers: <strong className="text-white">{customers.length}</strong>
-          </span>
+          <div className="flex items-center justify-between sm:justify-end gap-4">
+            <span className="text-xs text-zinc-400">
+              Total Customers: <strong className="text-white">{customers.length}</strong>
+            </span>
+
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              disabled={isLoading || customers.length === 0}
+              className="px-4 py-2 rounded-xl bg-surface-raised hover:bg-surface border border-border hover:border-primary/50 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-card transition-all disabled:opacity-50 min-h-[40px]"
+              title="Download Customers CSV"
+            >
+              <Download className="w-4 h-4 text-primary" />
+              <span>Download CSV</span>
+            </button>
+          </div>
         </div>
 
         {/* 1. DESKTOP VIEW: Table (hidden on mobile) */}

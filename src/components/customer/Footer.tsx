@@ -39,9 +39,9 @@ export default function Footer() {
 
   const businessName = settings?.businessName || "Midnight Fuel";
   const tagline = settings?.tagline || "EAT • ENJOY • RECHARGE";
-  const phone = settings?.phone || "+91 79042 04664";
+  const phone = settings?.phone || "+91 90801 39363";
   const rawPhone = phone.replace(/[^0-9]/g, "");
-  const whatsapp = settings?.whatsapp || "+91 79042 04664";
+  const whatsapp = settings?.whatsapp || "+91 90801 39363";
   const cleanWhatsapp = whatsapp.replace(/[^0-9]/g, "");
   const address = settings?.address || "123 Food Street, Late Night Hub, Tirunelveli - 627001";
   const openTimeDisplay = formatTime12Hour(settings?.openingTime || "19:00");
@@ -121,7 +121,7 @@ export default function Footer() {
           </p>
           <div className="flex items-center gap-3 pt-2">
             <a
-              href={`https://wa.me/${cleanWhatsapp || "919876543210"}`}
+              href={`https://wa.me/${cleanWhatsapp || "919080139363"}`}
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2 rounded-lg bg-emerald-950/60 border border-emerald-800 text-emerald-400 hover:bg-emerald-900/60 text-xs font-semibold flex items-center gap-2 transition-colors"
@@ -227,7 +227,7 @@ export default function Footer() {
             <li className="flex items-center gap-2.5">
               <MessageCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
               <a
-                href={`https://wa.me/${cleanWhatsapp || "919876543210"}`}
+                href={`https://wa.me/${cleanWhatsapp || "919080139363"}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-emerald-400 text-emerald-400"
@@ -259,7 +259,7 @@ export default function Footer() {
           </div>
           <div className="flex items-center justify-center sm:justify-end">
             <span className="text-primary font-semibold tracking-wide bg-primary/10 border border-primary/20 px-3 py-1 rounded-full text-[11px]">
-              ⚡ FSSAI Certified: 12423019000123
+              ⚡ FSSAI Certified: 22426586000371
             </span>
           </div>
         </div>

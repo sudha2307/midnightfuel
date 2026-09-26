@@ -9,6 +9,8 @@ import {
   CheckCircle2,
   XCircle,
   Calendar,
+  Download,
+  FileSpreadsheet,
 } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import {
@@ -55,6 +57,121 @@ export default function AdminReportsPage() {
   const popular = reportData?.popularProducts || [];
   const payments = reportData?.paymentDistribution || [];
   const statuses = reportData?.statusDistribution || [];
+  const orders = reportData?.orders || [];
+
+  // CSV Export Handler
+  const handleExportCSV = () => {
+    if (!reportData) return;
+
+    const escapeCsv = (str: any) => {
+      if (str === null || str === undefined) return '""';
+      const clean = String(str).replace(/"/g, '""');
+      return `"${clean}"`;
+    };
+
+    const rangeLabels: Record<string, string> = {
+      today: "Today",
+      yesterday: "Yesterday",
+      week: "Last 7 Days",
+      month: "Last 30 Days",
+      all: "All Time",
+    };
+
+    const periodLabel = rangeLabels[range] || range;
+    const dateStr = new Date().toISOString().slice(0, 10);
+
+    const rows: string[] = [];
+
+    // 1. REPORT HEADER & SUMMARY SECTION
+    rows.push("MIDNIGHT FUEL - FINANCIAL & PERFORMANCE REPORT");
+    rows.push(`Generated On,${escapeCsv(new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }))}`);
+    rows.push(`Reporting Period,${escapeCsv(periodLabel)}`);
+    rows.push("");
+
+    rows.push("=== EXECUTIVE SUMMARY ===");
+    rows.push(`Total Orders Count,${stats.totalOrdersCount || 0}`);
+    rows.push(`Total Revenue (INR),₹${stats.totalRevenue || stats.totalSales || 0}`);
+    rows.push(`Food Sales Subtotal (INR),₹${stats.foodSales || 0}`);
+    rows.push(`Delivery Charges Collected (INR),₹${stats.deliveryChargesCollected || stats.deliveryCollected || 0}`);
+    rows.push(`Average Order Value (INR),₹${stats.averageOrderValue || 0}`);
+    rows.push(`Cash on Delivery (COD) Sales,₹${stats.cashSales || 0}`);
+    rows.push(`UPI Sales,₹${stats.upiSales || 0}`);
+    rows.push(`Peak Ordering Hour,${escapeCsv(stats.peakOrderingHour || "N/A")}`);
+    rows.push(`Best Selling Dish,${escapeCsv(stats.bestSellingItem || "N/A")}`);
+    rows.push("");
+
+    // 2. DETAILED ORDER-BY-ORDER BREAKDOWN
+    rows.push("=== ORDER-BY-ORDER RECORDS ===");
+    rows.push([
+      "Order Number",
+      "Created Date (IST)",
+      "Customer Name",
+      "Customer Phone",
+      "Order Type",
+      "Delivery Address",
+      "Items Ordered",
+      "Food Subtotal (INR)",
+      "Delivery Charge (INR)",
+      "Grand Total (INR)",
+      "Payment Method",
+      "Payment Status",
+      "Order Status",
+    ].map(escapeCsv).join(","));
+
+    if (orders && orders.length > 0) {
+      for (const ord of orders) {
+        const itemNames = [
+          ...(ord.items || []).map((i: any) => `${i.quantity}x ${i.productName}`),
+          ...(ord.combos || []).map((c: any) => `${c.quantity}x ${c.comboNameSnapshot}`),
+        ].join("; ");
+
+        const createdDate = ord.createdAt
+          ? new Date(ord.createdAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+          : "N/A";
+
+        rows.push([
+          ord.orderNumber,
+          createdDate,
+          ord.customerName,
+          ord.customerPhone,
+          ord.orderType,
+          ord.deliveryAddress || (ord.orderType === "PICKUP" ? "Counter Pickup" : ""),
+          itemNames,
+          ord.subtotal,
+          ord.deliveryCharge,
+          ord.grandTotal,
+          ord.paymentMethod,
+          ord.paymentStatus,
+          ord.orderStatus,
+        ].map(escapeCsv).join(","));
+      }
+    } else {
+      rows.push("No orders found for this selected period.,,,,,,,,,,,,");
+    }
+
+    rows.push("");
+
+    // 3. BEST SELLING PRODUCTS
+    rows.push("=== BEST SELLING PRODUCTS ===");
+    rows.push(["Rank", "Product / Combo Name", "Units Sold", "Total Revenue (INR)"].map(escapeCsv).join(","));
+    if (popular && popular.length > 0) {
+      popular.forEach((p: any, idx: number) => {
+        rows.push([idx + 1, p.name, p.count, p.revenue].map(escapeCsv).join(","));
+      });
+    }
+
+    // Generate CSV Blob with UTF-8 BOM
+    const csvContent = "\uFEFF" + rows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `midnight_fuel_report_${range}_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="flex-1 pb-16">
@@ -63,12 +180,13 @@ export default function AdminReportsPage() {
         subtitle="Operational metrics, 7 PM – 2 AM traffic heatmaps and financial aggregates."
       />
 
-      <main className="p-6 space-y-8 max-w-7xl mx-auto">
-        {/* Range Selector & KPI Cards */}
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-1.5 bg-surface p-1 rounded-xl border border-border text-xs">
+      <main className="p-4 sm:p-6 space-y-6 sm:space-y-8 max-w-7xl mx-auto">
+        {/* Range Selector & Actions */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 bg-surface p-1 rounded-xl border border-border text-xs overflow-x-auto scrollbar-none">
             {[
               { id: "today", label: "Today" },
+              { id: "yesterday", label: "Yesterday" },
               { id: "week", label: "Last 7 Days" },
               { id: "month", label: "Last 30 Days" },
               { id: "all", label: "All Time" },
@@ -76,7 +194,7 @@ export default function AdminReportsPage() {
               <button
                 key={tab.id}
                 onClick={() => setRange(tab.id)}
-                className={`px-3.5 py-1.5 rounded-lg font-bold transition-all ${
+                className={`px-3 sm:px-3.5 py-1.5 rounded-lg font-bold transition-all whitespace-nowrap ${
                   range === tab.id
                     ? "bg-primary text-black font-extrabold shadow-glow"
                     : "text-zinc-400 hover:text-white"
@@ -86,6 +204,17 @@ export default function AdminReportsPage() {
               </button>
             ))}
           </div>
+
+          <button
+            type="button"
+            onClick={handleExportCSV}
+            disabled={isLoading || !reportData}
+            className="px-4 py-2 rounded-xl bg-surface hover:bg-surface-raised border border-border hover:border-primary/50 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-card transition-all disabled:opacity-50 min-h-[38px]"
+            title="Download CSV Report for selected period"
+          >
+            <Download className="w-4 h-4 text-primary" />
+            <span>Download CSV ({range.toUpperCase()})</span>
+          </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

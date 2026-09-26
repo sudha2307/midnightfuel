@@ -2,27 +2,23 @@ import prisma from "./prisma";
 
 export async function generateNextOrderNumber(): Promise<string> {
   try {
-    // Find all existing order numbers to determine the true maximum integer
-    const orders = await prisma.order.findMany({
+    // Fetch latest order by creation date (fast indexed query)
+    const latestOrder = await prisma.order.findFirst({
+      where: { orderNumber: { startsWith: "MF" } },
+      orderBy: { createdAt: "desc" },
       select: { orderNumber: true },
     });
 
-    if (!orders || orders.length === 0) {
+    if (!latestOrder || !latestOrder.orderNumber) {
       return "MF10001";
     }
 
-    let maxNum = 10000;
-    for (const ord of orders) {
-      if (ord.orderNumber && ord.orderNumber.startsWith("MF")) {
-        const num = parseInt(ord.orderNumber.replace("MF", ""), 10);
-        if (!isNaN(num) && num > maxNum) {
-          maxNum = num;
-        }
-      }
+    const currentNum = parseInt(latestOrder.orderNumber.replace("MF", ""), 10);
+    if (!isNaN(currentNum) && currentNum >= 10000) {
+      return `MF${currentNum + 1}`;
     }
 
-    const nextNum = maxNum + 1;
-    return `MF${nextNum}`;
+    return "MF10001";
   } catch (error) {
     // Unique fallback using timestamp suffix
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);

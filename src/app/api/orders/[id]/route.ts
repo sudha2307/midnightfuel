@@ -268,3 +268,49 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const admin = await getAdminSession();
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized. Admin session required to delete orders." },
+        { status: 401 }
+      );
+    }
+
+    const { id } = await params;
+
+    const order = await prisma.order.findFirst({
+      where: {
+        OR: [{ id }, { orderNumber: id }],
+      },
+    });
+
+    if (!order) {
+      return NextResponse.json(
+        { success: false, error: "Order not found" },
+        { status: 404 }
+      );
+    }
+
+    // Cascade delete order and associated records (items, combos, payments, invoices, notifications, delivery histories)
+    await prisma.order.delete({
+      where: { id: order.id },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Order #${order.orderNumber} deleted successfully.`,
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
+  }
+}
+

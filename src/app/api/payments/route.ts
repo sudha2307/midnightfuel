@@ -16,7 +16,13 @@ export async function GET(req: NextRequest) {
     const method = searchParams.get("method"); // ALL | CASH | UPI
     const status = searchParams.get("status"); // PENDING | VERIFICATION_PENDING | PAID | FAILED
 
-    const where: any = {};
+    const where: any = {
+      order: {
+        orderStatus: {
+          not: "CANCELLED",
+        },
+      },
+    };
 
     if (method && method !== "ALL") {
       where.method = method === "CASH" ? "COD" : method;
@@ -42,7 +48,7 @@ export async function GET(req: NextRequest) {
         },
       },
       orderBy: { createdAt: "desc" },
-      take: 100,
+      take: 2000,
     });
 
     return NextResponse.json({ success: true, payments });

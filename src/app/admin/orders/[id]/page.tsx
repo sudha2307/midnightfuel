@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, use } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   MessageCircle,
@@ -20,6 +21,7 @@ import {
   ExternalLink,
   Printer,
   Receipt,
+  Trash2,
 } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import { OrderType, DeliveryDistanceSlabType } from "@/types";
@@ -31,12 +33,17 @@ export default function AdminOrderDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const router = useRouter();
   const { id } = use(params);
   const [order, setOrder] = useState<OrderType | null>(null);
   const [slabs, setSlabs] = useState<DeliveryDistanceSlabType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [isPreviewInvoiceOpen, setIsPreviewInvoiceOpen] = useState(false);
+
+  // Delete Order State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Internal Kitchen Note State
   const [internalKitchenNote, setInternalKitchenNote] = useState("");
@@ -52,6 +59,29 @@ export default function AdminOrderDetailPage({
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!order) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/orders/${order.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast(`Order #${order.orderNumber} deleted permanently.`);
+        setTimeout(() => {
+          router.push("/admin/orders/history");
+        }, 800);
+      } else {
+        showToast(data.error || "Failed to delete order.");
+        setIsDeleting(false);
+      }
+    } catch {
+      showToast("Network error while deleting order.");
+      setIsDeleting(false);
+    }
   };
 
   const fetchOrderAndSlabs = useCallback(async () => {
@@ -246,6 +276,13 @@ export default function AdminOrderDetailPage({
             >
               <FileText className="w-4 h-4 text-primary" /> View Invoice
             </Link>
+            <button
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="px-3 py-2 rounded-xl bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+              title="Permanently Delete Order"
+            >
+              <Trash2 className="w-4 h-4" /> Delete Order
+            </button>
           </div>
         }
       />
@@ -695,6 +732,69 @@ export default function AdminOrderDetailPage({
                 title="Invoice Preview"
                 className="w-full h-[65vh] rounded-2xl border border-border/50 bg-[#0d0d0d]"
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Order Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-[#141414] border border-rose-900/80 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-5 animate-in zoom-in-95">
+            <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-500 mx-auto">
+              <Trash2 className="w-7 h-7 stroke-[2.2]" />
+            </div>
+
+            <div className="text-center space-y-2">
+              <h3 className="text-lg font-black text-white font-heading">
+                Permanently Delete Order #{order.orderNumber}?
+              </h3>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                This action is <strong className="text-rose-400 font-bold">irreversible</strong>. 
+                This will permanently erase Order <span className="text-white font-bold">#{order.orderNumber}</span> and its associated tax invoice, customer item breakdown, payments, and delivery records from the system.
+              </p>
+            </div>
+
+            <div className="bg-surface p-4 rounded-2xl border border-border space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-zinc-500 font-bold uppercase text-[10px]">Customer:</span>
+                <span className="font-bold text-white">{order.customerName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-500 font-bold uppercase text-[10px]">Total Amount:</span>
+                <span className="font-black text-primary">{formatINR(order.grandTotal)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-500 font-bold uppercase text-[10px]">Status:</span>
+                <span className="text-zinc-300 font-bold">{order.orderStatus}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 rounded-xl bg-surface hover:bg-surface-raised border border-border text-zinc-300 text-xs font-bold transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteOrder}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-rose-950/60 transition-all disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Yes, Delete</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

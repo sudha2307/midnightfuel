@@ -18,6 +18,7 @@ import {
   Layers,
 } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
+import DishAnalyticsSection from "@/components/admin/DishAnalyticsSection";
 import {
   AreaChart,
   Area,
@@ -455,6 +456,9 @@ export default function AdminDashboardPage() {
             </ResponsiveContainer>
           </div>
         </div>
+
+        {/* 5. THIS WEEK TOP PERFORMANCE & DISH SALES ANALYTICS / COMPARISON TOOL */}
+        <DishAnalyticsSection />
       </main>
 
       {/* Close Store Confirmation Modal */}

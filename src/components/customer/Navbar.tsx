@@ -25,7 +25,7 @@ export default function Navbar() {
   const { settings, status } = useStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const cleanWhatsapp = (settings?.whatsapp || "+91 79042 04664").replace(/[^0-9]/g, "");
+  const cleanWhatsapp = (settings?.whatsapp || "+91 90801 39363").replace(/[^0-9]/g, "");
   const businessName = settings?.businessName || "Midnight Fuel";
   const tagline = settings?.tagline || "Eat • Enjoy • Recharge";
 
@@ -67,7 +67,7 @@ export default function Navbar() {
           <div className="flex items-center gap-2 sm:gap-3 text-zinc-400 text-[11px] flex-shrink-0">
             <span className="hidden lg:inline">🌙 Authentic Late Night Cloud Kitchen</span>
             <a
-              href={`https://wa.me/${cleanWhatsapp || "919876543210"}`}
+              href={`https://wa.me/${cleanWhatsapp || "919080139363"}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline flex items-center gap-1 font-bold whitespace-nowrap"

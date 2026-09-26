@@ -18,8 +18,8 @@ export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
 
   const businessName = settings?.businessName || "Midnight Fuel";
-  const phone = settings?.phone || "+91 79042 04664";
-  const whatsapp = settings?.whatsapp || "+91 79042 04664";
+  const phone = settings?.phone || "+91 90801 39363";
+  const whatsapp = settings?.whatsapp || "+91 90801 39363";
   const cleanWhatsapp = whatsapp.replace(/[^0-9]/g, "");
   const address = settings?.address || "123 Food Street, Late Night Hub, Tirunelveli - 627001";
   const openTimeDisplay = formatTime12Hour(settings?.openingTime || "19:00");
@@ -85,7 +85,7 @@ export default function ContactPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* WhatsApp */}
               <a
-                href={`https://wa.me/${cleanWhatsapp || "919876543210"}`}
+                href={`https://wa.me/${cleanWhatsapp || "919080139363"}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-6 rounded-3xl bg-surface border border-border hover:border-emerald-500/50 shadow-card transition-all group glass-card-hover"
@@ -170,7 +170,7 @@ export default function ContactPage() {
                   <input
                     type="tel"
                     required
-                    placeholder="79042 04664"
+                    placeholder="90801 39363"
                     className="w-full rounded-xl bg-surface-raised border border-border px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-primary transition-colors"
                   />
                 </div>

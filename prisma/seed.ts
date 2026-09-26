@@ -4,6 +4,11 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
+  if (process.env.NODE_ENV === "production" && process.env.ALLOW_SEED !== "true") {
+    console.error("❌ SAFETY ALERT: Seeding is blocked in production to prevent accidental data loss. Set ALLOW_SEED=true to override.");
+    process.exit(1);
+  }
+
   console.log("🌙 Seeding Midnight Fuel Database with complete updated menu items...");
 
   // 1. Clear existing data in reverse relation order
@@ -46,8 +51,8 @@ async function main() {
       businessName: "Midnight Fuel",
       tagline: "EAT • ENJOY • RECHARGE",
       logoUrl: "/images/logo.png",
-      phone: "+91 79042 04664",
-      whatsapp: "+91 79042 04664",
+      phone: "+91 90801 39363",
+      whatsapp: "+91 90801 39363",
       address: "123 Food Street, Late Night Hub, Tirunelveli - 627001",
       city: "Tirunelveli",
       openingTime: "19:00",

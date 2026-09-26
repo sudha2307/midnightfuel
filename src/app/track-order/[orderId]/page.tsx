@@ -57,7 +57,7 @@ export default function TrackOrderPage({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const kitchenAddress = settings?.address || "123 Food Street, Late Night Hub, Tirunelveli - 627001";
-  const kitchenPhone = settings?.phone || "+91 79042 04664";
+  const kitchenPhone = settings?.phone || "+91 90801 39363";
 
   const fetchOrder = useCallback(
     async (isManual = false) => {
@@ -451,7 +451,7 @@ export default function TrackOrderPage({
 
               <div className="pt-3 border-t border-border/60">
                 <a
-                  href={`https://wa.me/917904204664?text=Hi%2C%20I%20have%20a%20question%20about%20my%20${isPickup ? "pickup%20" : "delivery%20"}order%20%23${order.orderNumber}`}
+                  href={`https://wa.me/919080139363?text=Hi%2C%20I%20have%20a%20question%20about%20my%20${isPickup ? "pickup%20" : "delivery%20"}order%20%23${order.orderNumber}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-2.5 px-4 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-800 text-emerald-400 font-bold text-xs flex items-center justify-center gap-2 transition-colors"

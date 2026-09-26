@@ -32,6 +32,9 @@ import {
   ArrowRight,
   AlertTriangle,
   History,
+  Trash2,
+  Loader2,
+  AlertOctagon,
 } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import { OrderType } from "@/types";
@@ -58,9 +61,51 @@ export default function AdminOrderHistoryPage() {
   // Selected Order for Full Modal Preview
   const [previewOrder, setPreviewOrder] = useState<OrderType | null>(null);
 
+  // Delete Order Confirmation Modal & State
+  const [deleteOrderTarget, setDeleteOrderTarget] = useState<OrderType | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteFeedback, setDeleteFeedback] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
   // Pagination State (150 records per page)
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 150;
+
+  const handleDeleteOrder = async () => {
+    if (!deleteOrderTarget) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/orders/${deleteOrderTarget.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setOrders((prev) => prev.filter((o) => o.id !== deleteOrderTarget.id));
+        if (previewOrder?.id === deleteOrderTarget.id) {
+          setPreviewOrder(null);
+        }
+        setDeleteFeedback({
+          message: data.message || `Order #${deleteOrderTarget.orderNumber} deleted permanently.`,
+          type: "success",
+        });
+        setDeleteOrderTarget(null);
+        setTimeout(() => setDeleteFeedback(null), 4000);
+      } else {
+        setDeleteFeedback({
+          message: data.error || "Failed to delete order.",
+          type: "error",
+        });
+        setTimeout(() => setDeleteFeedback(null), 4000);
+      }
+    } catch (err: any) {
+      setDeleteFeedback({
+        message: err.message || "Network error while deleting order.",
+        type: "error",
+      });
+      setTimeout(() => setDeleteFeedback(null), 4000);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Reset page to 1 whenever any filter criteria changes
   useEffect(() => {
@@ -249,6 +294,32 @@ export default function AdminOrderHistoryPage() {
       />
 
       <main className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
+        {/* Feedback Alert */}
+        {deleteFeedback && (
+          <div
+            className={`p-4 rounded-2xl border flex items-center justify-between gap-3 text-xs font-bold animate-in fade-in slide-in-from-top-2 duration-200 ${
+              deleteFeedback.type === "success"
+                ? "bg-emerald-950/80 border-emerald-500/50 text-emerald-200"
+                : "bg-rose-950/80 border-rose-500/50 text-rose-200"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              {deleteFeedback.type === "success" ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              ) : (
+                <AlertOctagon className="w-4 h-4 text-rose-400 flex-shrink-0" />
+              )}
+              <span>{deleteFeedback.message}</span>
+            </div>
+            <button
+              onClick={() => setDeleteFeedback(null)}
+              className="p-1 rounded-lg hover:bg-black/30 text-zinc-400 hover:text-white"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         {/* 1. Date Range Preset Bar */}
         <div className="p-4 sm:p-5 rounded-3xl bg-surface border border-border space-y-4 shadow-card">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -669,6 +740,15 @@ export default function AdminOrderHistoryPage() {
                             >
                               <ArrowRight className="w-3.5 h-3.5" />
                             </Link>
+
+                            {/* Permanent Delete Button */}
+                            <button
+                              onClick={() => setDeleteOrderTarget(ord)}
+                              className="p-2 rounded-xl bg-rose-950/40 border border-rose-800/60 hover:border-rose-500 hover:bg-rose-900/60 text-rose-400 hover:text-rose-200 transition-all min-h-[36px] min-w-[36px] flex items-center justify-center"
+                              title="Permanently Delete Order"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -780,6 +860,13 @@ export default function AdminOrderHistoryPage() {
                         <Printer className="w-3.5 h-3.5 text-primary" />
                         <span>Invoice</span>
                       </Link>
+                      <button
+                        onClick={() => setDeleteOrderTarget(ord)}
+                        className="p-2 rounded-xl bg-rose-950/40 border border-rose-800/60 hover:border-rose-500 hover:bg-rose-900/60 text-rose-400 hover:text-rose-200 transition-all min-h-[38px] min-w-[38px] flex items-center justify-center"
+                        title="Delete Order"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1023,14 +1110,25 @@ export default function AdminOrderHistoryPage() {
             </div>
 
             {/* Modal Footer Actions */}
-            <div className="p-4 border-t border-border bg-surface-raised/60 flex items-center justify-between gap-3">
-              <Link
-                href={`/admin/orders/${previewOrder.id}`}
-                className="px-4 py-2 rounded-xl bg-surface border border-border hover:border-primary text-zinc-300 hover:text-white font-bold text-xs flex items-center gap-1.5 transition-colors"
-              >
-                <span>Full Order Management</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+            <div className="p-4 border-t border-border bg-surface-raised/60 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/admin/orders/${previewOrder.id}`}
+                  className="px-4 py-2 rounded-xl bg-surface border border-border hover:border-primary text-zinc-300 hover:text-white font-bold text-xs flex items-center gap-1.5 transition-colors"
+                >
+                  <span>Full Order Management</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+
+                <button
+                  onClick={() => setDeleteOrderTarget(previewOrder)}
+                  className="px-3 py-2 rounded-xl bg-rose-950/50 hover:bg-rose-900 border border-rose-800 text-rose-300 hover:text-white font-bold text-xs flex items-center gap-1.5 transition-all"
+                  title="Permanently Delete This Order"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete Order</span>
+                </button>
+              </div>
 
               <div className="flex items-center gap-2">
                 <Link
@@ -1048,6 +1146,74 @@ export default function AdminOrderHistoryPage() {
                   Close
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 8. DELETE ORDER PERMANENT CONFIRMATION MODAL */}
+      {deleteOrderTarget && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-[#141414] border border-rose-900/80 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-5 animate-in zoom-in-95">
+            <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-500 mx-auto">
+              <Trash2 className="w-7 h-7 stroke-[2.2]" />
+            </div>
+
+            <div className="text-center space-y-2">
+              <h3 className="text-lg font-black text-white font-heading">
+                Permanently Delete Order #{deleteOrderTarget.orderNumber}?
+              </h3>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                This action is <strong className="text-rose-400 font-bold">irreversible</strong>. 
+                This will permanently erase Order <span className="text-white font-bold">#{deleteOrderTarget.orderNumber}</span> and its associated tax invoice, customer item breakdown, payments, and delivery records from the system.
+              </p>
+            </div>
+
+            {/* Quick Details of the order being deleted */}
+            <div className="bg-surface p-4 rounded-2xl border border-border space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-zinc-500 font-bold uppercase text-[10px]">Customer:</span>
+                <span className="font-bold text-white">{deleteOrderTarget.customerName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-500 font-bold uppercase text-[10px]">Amount:</span>
+                <span className="font-black text-primary">{formatINR(deleteOrderTarget.grandTotal)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-500 font-bold uppercase text-[10px]">Date Placed:</span>
+                <span className="text-zinc-300">{formatDate(deleteOrderTarget.createdAt)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-500 font-bold uppercase text-[10px]">Fulfillment:</span>
+                <span className="text-zinc-300">{deleteOrderTarget.orderType === "PICKUP" ? "🥡 Pickup" : "🛵 Delivery"}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={() => setDeleteOrderTarget(null)}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 rounded-xl bg-surface hover:bg-surface-raised border border-border text-zinc-300 text-xs font-bold transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteOrder}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-rose-950/60 transition-all disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Yes, Delete</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

@@ -16,10 +16,13 @@ import {
   Phone,
   MessageCircle,
   MapPin,
+  Sparkles,
+  ChefHat,
+  X,
 } from "lucide-react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import { useStore } from "@/context/StoreContext";
-import { DeliveryDistanceSlabType } from "@/types";
+import { DeliveryDistanceSlabType, ProductType } from "@/types";
 
 export default function AdminSettingsPage() {
   const { settings, refreshSettings } = useStore();
@@ -28,8 +31,8 @@ export default function AdminSettingsPage() {
   const [formData, setFormData] = useState({
     businessName: "Midnight Fuel",
     tagline: "EAT • ENJOY • RECHARGE",
-    phone: "+91 79042 04664",
-    whatsapp: "+91 79042 04664",
+    phone: "+91 90801 39363",
+    whatsapp: "+91 90801 39363",
     address: "123 Food Street, Late Night Hub, Tirunelveli - 627001",
     city: "Tirunelveli",
     openingTime: "19:00",
@@ -39,10 +42,15 @@ export default function AdminSettingsPage() {
     storeMode: "AUTO",
     isCashEnabled: true,
     isUpiEnabled: true,
+    todaySpecialProductId: "",
   });
 
   // Track if initial database values have been loaded into form state
   const [isLoaded, setIsLoaded] = useState(false);
+
+  // Products state for dropdown selection
+  const [products, setProducts] = useState<ProductType[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
 
   // Delivery slabs state
   const [slabs, setSlabs] = useState<DeliveryDistanceSlabType[]>([]);
@@ -69,14 +77,30 @@ export default function AdminSettingsPage() {
     }
   };
 
+  // Load available products for Kitchen Special dropdown
+  const fetchProducts = async () => {
+    setIsLoadingProducts(true);
+    try {
+      const res = await fetch("/api/menu", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setProducts(data.products || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch products:", e);
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  };
+
   // Populate initial values once from StoreContext / Database
   useEffect(() => {
     if (settings && !isLoaded) {
       setFormData({
         businessName: settings.businessName || "Midnight Fuel",
         tagline: settings.tagline || "EAT • ENJOY • RECHARGE",
-        phone: settings.phone || "+91 98765 43210",
-        whatsapp: settings.whatsapp || "+91 98765 43210",
+        phone: settings.phone || "+91 90801 39363",
+        whatsapp: settings.whatsapp || "+91 90801 39363",
         address: settings.address || "123 Food Street, Late Night Hub, Tirunelveli - 627001",
         city: settings.city || "Tirunelveli",
         openingTime: settings.openingTime || "19:00",
@@ -86,10 +110,12 @@ export default function AdminSettingsPage() {
         storeMode: settings.storeMode || "AUTO",
         isCashEnabled: settings.isCashEnabled !== undefined ? settings.isCashEnabled : true,
         isUpiEnabled: settings.isUpiEnabled !== undefined ? settings.isUpiEnabled : true,
+        todaySpecialProductId: settings.todaySpecialProductId || "",
       });
       setIsLoaded(true);
     }
     fetchSlabs();
+    fetchProducts();
   }, [settings, isLoaded]);
 
   // Generic input change handler
@@ -154,8 +180,8 @@ export default function AdminSettingsPage() {
           setFormData({
             businessName: data.settings.businessName || "Midnight Fuel",
             tagline: data.settings.tagline || "EAT • ENJOY • RECHARGE",
-            phone: data.settings.phone || "+91 98765 43210",
-            whatsapp: data.settings.whatsapp || "+91 98765 43210",
+            phone: data.settings.phone || "+91 90801 39363",
+            whatsapp: data.settings.whatsapp || "+91 90801 39363",
             address: data.settings.address || "123 Food Street, Late Night Hub, Tirunelveli - 627001",
             city: data.settings.city || "Tirunelveli",
             openingTime: data.settings.openingTime || "19:00",
@@ -165,6 +191,7 @@ export default function AdminSettingsPage() {
             storeMode: data.settings.storeMode || "AUTO",
             isCashEnabled: data.settings.isCashEnabled !== undefined ? data.settings.isCashEnabled : true,
             isUpiEnabled: data.settings.isUpiEnabled !== undefined ? data.settings.isUpiEnabled : true,
+            todaySpecialProductId: data.settings.todaySpecialProductId || "",
           });
         }
         await refreshSettings();
@@ -386,6 +413,126 @@ export default function AdminSettingsPage() {
                   className="w-full rounded-xl bg-surface-raised border border-border px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary min-h-[44px]"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Kitchen Today's Special Dish (Featured on Home Page Hero) */}
+          <div className="p-4 sm:p-6 rounded-3xl bg-surface border border-border space-y-4 shadow-card">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border/60 pb-3 gap-1">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider font-heading">
+                  Kitchen Today Special Dish
+                </h3>
+              </div>
+              <span className="text-[11px] text-zinc-400">
+                Featured prominently on customer home page hero card
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="todaySpecialProductId" className="block font-bold text-zinc-400 uppercase mb-1.5 flex items-center justify-between">
+                  <span>Select Today's Special Dish</span>
+                  {isLoadingProducts && (
+                    <span className="text-[10px] text-primary animate-pulse font-normal lowercase">Loading menu dishes...</span>
+                  )}
+                </label>
+                <div className="flex items-center gap-2">
+                  <select
+                    id="todaySpecialProductId"
+                    name="todaySpecialProductId"
+                    value={formData.todaySpecialProductId}
+                    onChange={(e) => handleInputChange("todaySpecialProductId", e.target.value)}
+                    className="w-full rounded-xl bg-surface-raised border border-border px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary min-h-[44px]"
+                  >
+                    <option value="">-- None (Auto / Default Featured Dish) --</option>
+                    {products.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.isVeg ? "🌿" : "🍗"} {product.name} — ₹{product.price} ({product.category?.name || "General"}) {!product.isAvailable ? "(Unavailable)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  {formData.todaySpecialProductId && (
+                    <button
+                      type="button"
+                      onClick={() => handleInputChange("todaySpecialProductId", "")}
+                      className="px-3 py-2.5 rounded-xl bg-surface-raised hover:bg-rose-950/40 text-zinc-400 hover:text-rose-400 border border-border hover:border-rose-800 transition-colors min-h-[44px] flex items-center justify-center gap-1 flex-shrink-0 text-xs font-bold"
+                      title="Clear Selection"
+                    >
+                      <X className="w-4 h-4" /> Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Selected Dish Preview */}
+              {(() => {
+                const selectedProd = products.find((p) => p.id === formData.todaySpecialProductId);
+                if (!selectedProd) {
+                  return (
+                    <div className="p-4 rounded-2xl bg-surface-raised/50 border border-dashed border-border/80 flex items-center gap-3 text-zinc-500 text-xs">
+                      <ChefHat className="w-5 h-5 text-zinc-600 flex-shrink-0" />
+                      <span>
+                        No specific dish selected. The home page will showcase the primary signature / popular dish by default. Choose a dish above to set tonight's dynamic special.
+                      </span>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="p-4 rounded-2xl bg-surface-raised border border-primary/40 flex flex-col sm:flex-row items-start sm:items-center gap-4 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+                    
+                    {selectedProd.image ? (
+                      <img
+                        src={selectedProd.image}
+                        alt={selectedProd.name}
+                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl object-cover border border-border/60 flex-shrink-0 shadow-md"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-zinc-900 border border-border flex items-center justify-center flex-shrink-0 text-zinc-600">
+                        <ChefHat className="w-8 h-8" />
+                      </div>
+                    )}
+
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="px-2 py-0.5 rounded-full bg-primary text-black text-[10px] font-extrabold uppercase tracking-wider inline-flex items-center gap-1 shadow-glow">
+                          <Sparkles className="w-2.5 h-2.5 fill-black" /> Kitchen Today Special
+                        </span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${selectedProd.isVeg ? "bg-emerald-950 text-emerald-400 border border-emerald-800" : "bg-rose-950 text-rose-400 border border-rose-800"}`}>
+                          {selectedProd.isVeg ? "🌿 Pure Veg" : "🍗 Non-Veg"}
+                        </span>
+                        {selectedProd.category?.name && (
+                          <span className="text-[10px] text-zinc-400 bg-zinc-800/80 px-2 py-0.5 rounded-full">
+                            {selectedProd.category.name}
+                          </span>
+                        )}
+                      </div>
+
+                      <h4 className="text-base font-extrabold text-white truncate">
+                        {selectedProd.name}
+                      </h4>
+
+                      <p className="text-xs text-zinc-400 line-clamp-1">
+                        {selectedProd.description || "No description provided."}
+                      </p>
+
+                      <div className="pt-1 flex items-center gap-2">
+                        <span className="text-sm sm:text-base font-black text-primary">
+                          ₹{selectedProd.price}
+                        </span>
+                        {!selectedProd.isAvailable && (
+                          <span className="text-[10px] text-rose-400 font-semibold">
+                            (Currently marked as unavailable in menu)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
@@ -659,7 +806,7 @@ export default function AdminSettingsPage() {
                   type="text"
                   value={formData.phone}
                   onChange={(e) => handleInputChange("phone", e.target.value)}
-                  placeholder="+91 98765 43210"
+                  placeholder="+91 90801 39363"
                   className="w-full rounded-xl bg-surface-raised border border-border px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary min-h-[44px]"
                 />
               </div>
@@ -674,7 +821,7 @@ export default function AdminSettingsPage() {
                   type="text"
                   value={formData.whatsapp}
                   onChange={(e) => handleInputChange("whatsapp", e.target.value)}
-                  placeholder="+91 98765 43210"
+                  placeholder="+91 90801 39363"
                   className="w-full rounded-xl bg-surface-raised border border-border px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary min-h-[44px]"
                 />
               </div>

@@ -124,8 +124,18 @@ export default function AdminInvoicesPage() {
         if (paymentMethodFilter === "UPI" && method !== "UPI") return false;
       }
 
-      // Payment Status Filter
-      if (paymentStatusFilter !== "ALL") {
+      // Status Filter (Paid, Pending, Cancelled)
+      if (paymentStatusFilter === "CANCELLED") {
+        if (ord.orderStatus !== "CANCELLED") return false;
+      } else if (paymentStatusFilter === "PAID") {
+        if (ord.orderStatus === "CANCELLED") return false;
+        const isPaid = ord.paymentStatus === "PAID" || ord.paymentStatus === "COMPLETED" || ord.paymentStatus === "SUCCESS";
+        if (!isPaid) return false;
+      } else if (paymentStatusFilter === "PENDING") {
+        if (ord.orderStatus === "CANCELLED") return false;
+        const isPending = ord.paymentStatus === "PENDING" || ord.paymentStatus === "VERIFICATION_PENDING";
+        if (!isPending) return false;
+      } else if (paymentStatusFilter !== "ALL") {
         if (ord.paymentStatus !== paymentStatusFilter) return false;
       }
 
@@ -160,12 +170,13 @@ export default function AdminInvoicesPage() {
   // Aggregate Metrics for Selected Range
   const metrics = useMemo(() => {
     const validInvoices = filteredInvoices.filter((o) => o.orderStatus !== "CANCELLED");
+    const cancelledInvoices = filteredInvoices.filter((o) => o.orderStatus === "CANCELLED");
 
     const totalRevenue = validInvoices.reduce((sum, o) => sum + o.grandTotal, 0);
     const foodSubtotal = validInvoices.reduce((sum, o) => sum + o.subtotal, 0);
     const deliveryCharges = validInvoices.reduce((sum, o) => sum + (o.deliveryCharge || 0), 0);
     const count = filteredInvoices.length;
-    const paidCount = validInvoices.filter((o) => o.paymentStatus === "PAID" || o.paymentStatus === "COMPLETED").length;
+    const paidCount = validInvoices.filter((o) => o.paymentStatus === "PAID" || o.paymentStatus === "COMPLETED" || o.paymentStatus === "SUCCESS").length;
     const pendingCount = validInvoices.filter((o) => o.paymentStatus === "PENDING" || o.paymentStatus === "VERIFICATION_PENDING").length;
     const aov = validInvoices.length > 0 ? totalRevenue / validInvoices.length : 0;
 
@@ -183,6 +194,7 @@ export default function AdminInvoicesPage() {
       deliveryCharges,
       count,
       validCount: validInvoices.length,
+      cancelledCount: cancelledInvoices.length,
       paidCount,
       pendingCount,
       aov,
@@ -317,17 +329,28 @@ export default function AdminInvoicesPage() {
 
               <span className="text-zinc-500 font-bold uppercase text-[10px] ml-2">Status:</span>
               <div className="flex items-center gap-1 bg-surface-raised p-1 rounded-xl border border-border">
-                {["ALL", "PAID", "PENDING"].map((st) => (
+                {[
+                  { id: "ALL", label: "All Invoices" },
+                  { id: "PAID", label: "Paid" },
+                  { id: "PENDING", label: "Pending" },
+                  { id: "CANCELLED", label: "Cancelled" },
+                ].map((st) => (
                   <button
-                    key={st}
-                    onClick={() => setPaymentStatusFilter(st)}
+                    key={st.id}
+                    onClick={() => setPaymentStatusFilter(st.id)}
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                      paymentStatusFilter === st
-                        ? "bg-white text-black font-extrabold"
+                      paymentStatusFilter === st.id
+                        ? st.id === "CANCELLED"
+                          ? "bg-rose-600 text-white font-black shadow-sm"
+                          : st.id === "PAID"
+                          ? "bg-emerald-500 text-black font-black"
+                          : st.id === "PENDING"
+                          ? "bg-amber-500 text-black font-black"
+                          : "bg-white text-black font-extrabold"
                         : "text-zinc-400 hover:text-white"
                     }`}
                   >
-                    {st}
+                    {st.label}
                   </button>
                 ))}
               </div>
@@ -360,9 +383,17 @@ export default function AdminInvoicesPage() {
             <span className="text-2xl sm:text-3xl font-black text-white block">
               {metrics.count} Orders
             </span>
-            <span className="text-[11px] text-emerald-400 block">
-              {metrics.paidCount} Paid • {metrics.pendingCount} Pending
-            </span>
+            <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 flex-wrap">
+              <span className="text-emerald-400 font-bold">{metrics.paidCount} Paid</span>
+              <span>•</span>
+              <span className="text-amber-400 font-bold">{metrics.pendingCount} Pending</span>
+              {metrics.cancelledCount > 0 && (
+                <>
+                  <span>•</span>
+                  <span className="text-rose-400 font-bold">{metrics.cancelledCount} Cancelled</span>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="p-5 rounded-3xl bg-surface border border-border shadow-card space-y-1">
@@ -418,12 +449,20 @@ export default function AdminInvoicesPage() {
                     </td>
                   </tr>
                 ) : (
-                  paginatedInvoices.map((ord) => {
+                    paginatedInvoices.map((ord) => {
                     const invNumber = ord.invoice?.invoiceNumber || `INV-${ord.orderNumber}`;
+                    const isCancelled = ord.orderStatus === "CANCELLED";
                     const isPaid = ord.paymentStatus === "PAID" || ord.paymentStatus === "COMPLETED";
 
                     return (
-                      <tr key={ord.id} className="hover:bg-surface-raised/40 transition-colors">
+                      <tr
+                        key={ord.id}
+                        className={`transition-colors ${
+                          isCancelled
+                            ? "bg-rose-950/20 hover:bg-rose-950/30"
+                            : "hover:bg-surface-raised/40"
+                        }`}
+                      >
                         <td className="py-4 px-6">
                           <span className="font-bold text-white text-sm block font-heading">
                             {invNumber}
@@ -464,15 +503,21 @@ export default function AdminInvoicesPage() {
                         </td>
 
                         <td className="py-4 px-4">
-                          <span
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase border ${
-                              isPaid
-                                ? "bg-emerald-950/70 border-emerald-700 text-emerald-400"
-                                : "bg-amber-950/70 border-amber-700 text-amber-400"
-                            }`}
-                          >
-                            {ord.paymentMethod} • {ord.paymentStatus}
-                          </span>
+                          {isCancelled ? (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase border bg-rose-950/90 border-rose-600 text-rose-300 shadow-sm inline-block">
+                              ORDER CANCELLED
+                            </span>
+                          ) : (
+                            <span
+                              className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase border ${
+                                isPaid
+                                  ? "bg-emerald-950/70 border-emerald-700 text-emerald-400"
+                                  : "bg-amber-950/70 border-amber-700 text-amber-400"
+                              }`}
+                            >
+                              {ord.paymentMethod} • {ord.paymentStatus}
+                            </span>
+                          )}
                         </td>
 
                         <td className="py-4 px-4 text-right">
@@ -515,12 +560,15 @@ export default function AdminInvoicesPage() {
         <div className="md:hidden space-y-3">
           {paginatedInvoices.map((ord) => {
             const invNumber = ord.invoice?.invoiceNumber || `INV-${ord.orderNumber}`;
+            const isCancelled = ord.orderStatus === "CANCELLED";
             const isPaid = ord.paymentStatus === "PAID" || ord.paymentStatus === "COMPLETED";
 
             return (
               <div
                 key={ord.id}
-                className="p-4 rounded-2xl bg-surface border border-border space-y-3 shadow-card"
+                className={`p-4 rounded-2xl border space-y-3 shadow-card ${
+                  isCancelled ? "bg-rose-950/20 border-rose-800/60" : "bg-surface border-border"
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -552,15 +600,21 @@ export default function AdminInvoicesPage() {
                     <span className="text-[11px] text-zinc-400 block font-medium">
                       {formatDate(ord.createdAt)}
                     </span>
-                    <span
-                      className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full inline-block mt-0.5 ${
-                        isPaid
-                          ? "bg-emerald-950/70 border border-emerald-700 text-emerald-400"
-                          : "bg-amber-950/70 border border-amber-700 text-amber-400"
-                      }`}
-                    >
-                      {ord.paymentMethod} • {ord.paymentStatus}
-                    </span>
+                    {isCancelled ? (
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full inline-block mt-0.5 bg-rose-950/90 border border-rose-600 text-rose-300 shadow-sm">
+                        ORDER CANCELLED
+                      </span>
+                    ) : (
+                      <span
+                        className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full inline-block mt-0.5 ${
+                          isPaid
+                            ? "bg-emerald-950/70 border border-emerald-700 text-emerald-400"
+                            : "bg-amber-950/70 border border-amber-700 text-amber-400"
+                        }`}
+                      >
+                        {ord.paymentMethod} • {ord.paymentStatus}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-1.5">
@@ -659,9 +713,16 @@ export default function AdminInvoicesPage() {
                   <Receipt className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-white font-heading">
-                    Invoice Preview: {previewOrder.invoice?.invoiceNumber || `INV-${previewOrder.orderNumber}`}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-white font-heading">
+                      Invoice Preview: {previewOrder.invoice?.invoiceNumber || `INV-${previewOrder.orderNumber}`}
+                    </h3>
+                    {previewOrder.orderStatus === "CANCELLED" && (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border bg-rose-950/90 border-rose-600 text-rose-300">
+                        ORDER CANCELLED
+                      </span>
+                    )}
+                  </div>
                   <span className="text-xs text-zinc-400">
                     Order #{previewOrder.orderNumber} • {previewOrder.customerName} ({previewOrder.customerPhone})
                   </span>

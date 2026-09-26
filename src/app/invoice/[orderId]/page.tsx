@@ -94,7 +94,7 @@ export default async function InvoicePage({
               {settings?.address || "123 Food Street, Late Night Hub, Tirunelveli - 627001"}
             </p>
             <p className="text-xs text-zinc-400">
-              Phone: {settings?.phone || "+91 98765 43210"} • WhatsApp: {settings?.whatsapp || "+91 98765 43210"}
+              Phone: {settings?.phone || "+91 90801 39363"} • WhatsApp: {settings?.whatsapp || "+91 90801 39363"}
             </p>
           </div>
 
