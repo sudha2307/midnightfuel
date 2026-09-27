@@ -353,20 +353,24 @@ export default function CartPage() {
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-zinc-300">
-                    <div>
-                      <span>Delivery Charge</span>
-                      {orderType === "DELIVERY" && (
-                        <span className="text-[10px] sm:text-[11px] text-zinc-500 block">
-                          Based on delivery distance
+                  <div className="flex items-start justify-between text-zinc-300 gap-2">
+                    <div className="flex-1 pr-2">
+                      <span className="text-white font-medium">Delivery Charge</span>
+                      {orderType === "DELIVERY" ? (
+                        <span className="text-[10px] sm:text-[11px] text-amber-400/90 block mt-0.5 leading-snug">
+                          Delivery charge will be fixed by partner at the time of delivery based on distance
+                        </span>
+                      ) : (
+                        <span className="text-[10px] sm:text-[11px] text-zinc-500 block mt-0.5">
+                          Kitchen self-pickup
                         </span>
                       )}
                     </div>
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-white flex-shrink-0 text-right">
                       {orderType === "PICKUP" ? (
                         <span className="text-emerald-400 font-bold">FREE</span>
                       ) : (
-                        formatINR(deliveryCharge)
+                        <span className="text-zinc-400 text-xs font-medium">At Delivery</span>
                       )}
                     </span>
                   </div>

@@ -195,6 +195,8 @@ export default function CheckoutPage() {
         customerWhatsapp: cleanWhatsapp,
         orderType,
         deliveryAddress: orderType === "DELIVERY" ? fullAddress : undefined,
+        // Delivery charge is fixed by delivery partner at delivery time based on distance
+        deliveryCharge: 0,
         specialNote: specialNote.trim() ? specialNote.trim() : null,
         paymentMethod,
         items: regularProductItems,
@@ -704,20 +706,24 @@ export default function CheckoutPage() {
                   <span className="text-white font-semibold">{formatINR(subtotal)}</span>
                 </div>
 
-                <div className="flex justify-between text-zinc-400">
-                  <div>
-                    <span>Delivery Charge</span>
-                    {orderType === "DELIVERY" && (
-                      <span className="text-[10px] text-zinc-500 block">
-                        Estimated / confirmed by team
+                <div className="flex justify-between items-start text-zinc-400 gap-2">
+                  <div className="flex-1 pr-2">
+                    <span className="text-white font-medium">Delivery Charge</span>
+                    {orderType === "DELIVERY" ? (
+                      <span className="text-[10px] sm:text-[11px] text-amber-400/90 block mt-0.5 leading-snug">
+                        Delivery charge will be fixed by partner at the time of delivery based on distance
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-zinc-500 block mt-0.5">
+                        Kitchen takeaway / self-pickup
                       </span>
                     )}
                   </div>
-                  <span className="text-white font-semibold">
+                  <span className="text-white font-semibold flex-shrink-0 text-right">
                     {orderType === "PICKUP" ? (
                       <span className="text-emerald-400 font-bold">FREE</span>
                     ) : (
-                      formatINR(deliveryCharge)
+                      <span className="text-zinc-400 text-xs font-medium">At Delivery</span>
                     )}
                   </span>
                 </div>

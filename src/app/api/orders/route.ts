@@ -335,6 +335,8 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Calculate Order Totals (NO GST, NO NOTE FEE)
+    // Delivery charge is fixed by partner at the time of delivery based on distance (0 at placement)
+    /*
     let initialDeliveryCharge = 0;
     if (orderType === "DELIVERY") {
       const distanceNum = deliveryDistanceKm !== undefined && deliveryDistanceKm !== null ? Number(deliveryDistanceKm) : null;
@@ -351,6 +353,8 @@ export async function POST(req: NextRequest) {
         initialDeliveryCharge = 40;
       }
     }
+    */
+    const initialDeliveryCharge = 0;
 
     const calculation = calculateOrderTotals({
       items: calcItems,

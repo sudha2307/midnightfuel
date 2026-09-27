@@ -87,7 +87,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     items: calcItems,
     combos: calcCombos,
     orderType,
-    deliveryCharge: orderType === "DELIVERY" ? 40 : 0, // Estimated default for preview
+    // Upfront delivery charge is 0 at checkout; fixed by delivery partner at delivery time based on distance
+    // deliveryCharge: orderType === "DELIVERY" ? 40 : 0,
+    deliveryCharge: 0,
   });
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
